@@ -97,7 +97,7 @@ INSERT INTO StarterPaaDag (ruteID, ukedag) VALUES (3, "fredag");
 
 -- Legger til InngaarITogrute (5min pause)
 -- Rute 1, dagtog Trondheim-Bodoe
-INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (1, 1, NULL, "0749"); -- Trondheim S
+INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (1, 1, NULL, "0749"); -- Trondheim
 INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (1, 2, "0946", "0951"); -- Steinkjer
 INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (1, 3, "1315", "1320"); -- Mosjoeen
 INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (1, 4, "1426", "1431"); -- Mo i Rana
@@ -105,7 +105,7 @@ INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (
 INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (1, 6, "1734", NULL); -- Bodoe
 
 -- Rute 2, nattog Trondheim-Bodoe
-INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (2, 1, NULL, "2305"); -- Trondheim S
+INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (2, 1, NULL, "2305"); -- Trondheim
 INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (2, 2, "0052", "0057"); -- Steinkjer
 INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (2, 3, "0436", "0441"); -- Mosjoeen
 INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (2, 4, "0550", "0555"); -- Mo i Rana
@@ -116,18 +116,18 @@ INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (
 INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (3, 4, NULL, "0811"); -- Mo i Rana
 INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (3, 3, "0909", "0914"); -- Mosjoeen
 INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (3, 2, "1226", "1231"); -- Steinkjer
-INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (3, 1, "1413", NULL); -- Trondheim S
+INSERT INTO InngaarITogrute (ruteID, stasjonID, ankomsttid, avgangstid) VALUES (3, 1, "1413", NULL); -- Trondheim
 
 -- Legger til BestarAvDelstrekninger
 -- Rute 1, dagtog Trondheim-Bodoe
-INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (1, 1); -- Trondheim S - Steinkjer
+INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (1, 1); -- Trondheim - Steinkjer
 INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (1, 2); -- Steinkjer - Mosjoeen
 INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (1, 3); -- Mosjoeen - Mo i Rana
 INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (1, 4); -- Mo i Rana - Fauske
 INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (1, 5); -- Fauske - Bodoe
 
 -- Rute 2, nattog Trondheim-Bodoe
-INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (2, 1); -- Trondheim S - Steinkjer
+INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (2, 1); -- Trondheim - Steinkjer
 INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (2, 2); -- Steinkjer - Mosjoeen
 INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (2, 3); -- Mosjoeen - Mo i Rana
 INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (2, 4); -- Mo i Rana - Fauske
@@ -136,5 +136,5 @@ INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (2, 5); -- Fa
 -- Rute 3, morgentog Mo i Rana - Trondheim
 INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (3, 3); -- Mosjoeen - Mo i Rana
 INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (3, 2); -- Steinkjer - Mosjoeen
-INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (3, 1); -- Trondheim S - Steinkjer
+INSERT INTO BestarAvDelstrekninger (ruteID, delstrekningID) VALUES (3, 1); -- Trondheim - Steinkjer
 

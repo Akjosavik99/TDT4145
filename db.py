@@ -4,7 +4,7 @@ con = sql.connect('tog.db')
 c = con.cursor()
 
 def main():
-    brukerhistorie = input(f"Skriv en bokstav mellom c og h for å velge brukerhistorie, trykk enter for å avslutte programmet: ")
+    brukerhistorie = input(f"Skriv en bokstav mellom c og h for å velge brukerhistorie, trykk enter for å avslutte programmet: ").lower()
     if brukerhistorie == "":
         print("Programmet er ferdig")
     elif brukerhistorie == "c":
@@ -24,17 +24,21 @@ def main():
         main()
 
 def BH_c():
-    stasjon = input("Skriv inn stasjonsnavn: ")
+    stasjon = input("Skriv inn stasjonsnavn: ").capitalize().strip() #Lager stor forbokstav og fjerner mellomrom
+    print(stasjon)
     try:
         id = c.execute("SELECT stasjonID FROM Stasjon WHERE stasjonsnavn = :stasjon", {"stasjon": stasjon})
         con.commit()
-        ukedag = input("Skriv inn ukedag på norsk (bruke 'o' i stedet for 'ø'): ").lower()
-        c.execute("SELECT t.ruteID, dag.ukedag FROM Togrute as t JOIN StarterPaaDag as dag ON t.ruteID = dag.ruteID")
+        print(id)
+        ukedag = input("Skriv inn ukedag på norsk (bruk 'o' i stedet for 'ø'): ").lower()
+        c.execute("SELECT t.ruteID, dag.ukedag FROM Togrute as t JOIN StarterPaaDag as dag ON t.ruteID = dag.ruteID WHERE dag.ukedag = :ukedag AND t.ruteID = :id", {"ukedag": ukedag, "id": id})
+        con.commit()
+        ruter = c.fetchall()
+        print(ruter)
 
-        c.execute("SELECT * FROM InngaarITogrute WHERE stasjonsID = :id", {"id": id})
-        print(c.fetchall())
-    except:
+    except sql.Error as e:
         print("Fant ikke stasjon. Dobbelsjekk at du stavet navnet riktig.")
+        print(f"Feilkode: {e}")
 
 def BH_d():
     pass
@@ -65,8 +69,8 @@ def BH_e():
 
     # Legger til kunde i databasen
     c.execute("INSERT INTO Kunde (navn, tlf, epost) VALUES (:navn, :tlf, :epost)", {"navn": navn, "tlf": tlf, "epost": epost})
-
-
+    con.commit()
+    print(f"Kunde registrert: {navn}, {tlf}, {epost}")
 
 def BH_f():
     pass

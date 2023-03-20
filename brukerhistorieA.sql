@@ -1,5 +1,5 @@
 -- Legger inn stasjoner på Norlandsbanen
-INSERT INTO Stasjon (moh, stasjonsnavn) VALUES (5.1, "Trondheim S");
+INSERT INTO Stasjon (moh, stasjonsnavn) VALUES (5.1, "Trondheim");
 INSERT INTO Stasjon (moh, stasjonsnavn) VALUES (3.6, "Steinkjer");
 INSERT INTO Stasjon (moh, stasjonsnavn) VALUES (6.8, "Mosjoeen");
 INSERT INTO Stasjon (moh, stasjonsnavn) VALUES (3.5, "Mo i Rana");
@@ -17,11 +17,11 @@ INSERT INTO Delstrekning (banestrekningID, lengde, erDobbeltspor) VALUES (1, 170
 INSERT INTO Delstrekning (banestrekningID, lengde, erDobbeltspor) VALUES (1, 170, 0);
 
 -- Legger inn start og endestasjon på Norlandsbanen
-INSERT INTO StartOgEndestasjoner (banestrekningID, stasjonID, stasjonsType) VALUES (1, 1, "start"); -- Trondheim S
+INSERT INTO StartOgEndestasjoner (banestrekningID, stasjonID, stasjonsType) VALUES (1, 1, "start"); -- Trondheim
 INSERT INTO StartOgEndestasjoner (banestrekningID, stasjonID, stasjonsType) VALUES (1, 6, "ende"); -- Bodoe
 
 -- Legger inn bestaarAvStasjon på Norlandsbanen
-INSERT INTO BestarAvStasjon (delstrekningID, stasjonID, stasjonsType) VALUES (1, 1, "start"); -- Trondheim S
+INSERT INTO BestarAvStasjon (delstrekningID, stasjonID, stasjonsType) VALUES (1, 1, "start"); -- Trondheim
 INSERT INTO BestarAvStasjon (delstrekningID, stasjonID, stasjonsType) VALUES (1, 2, "ende"); -- Steinkjer
 INSERT INTO BestarAvStasjon (delstrekningID, stasjonID, stasjonsType) VALUES (2, 2, "start"); -- Steinkjer
 INSERT INTO BestarAvStasjon (delstrekningID, stasjonID, stasjonsType) VALUES (2, 3, "ende"); -- Mosjoeen
