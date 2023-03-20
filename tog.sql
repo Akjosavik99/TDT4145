@@ -1,11 +1,11 @@
 CREATE TABLE Operatoer(
-    operatoerID INTEGER AUTO INCREMENT,
+    operatoerID INTEGER,
     navn VARCHAR(10) NOT NULL,
     PRIMARY KEY (operatoerID)
 );
 
 CREATE TABLE Togrute(
-    ruteID INTEGER AUTO INCREMENT,
+    ruteID INTEGER,
     operatoerID INTEGER NOT NULL,
     PRIMARY KEY(ruteID),
     FOREIGN KEY(operatoerID) REFERENCES Operatoer(operatoerID) ON DELETE CASCADE
@@ -18,24 +18,24 @@ CREATE TABLE StarterPaaDag(
 );
 
 CREATE TABLE Stasjon(
-    stasjonsID INTEGER AUTO INCREMENT,
+    stasjonID INTEGER,
     moh INTEGER NOT NULL,
     stasjonsnavn VARCHAR(30) NOT NULL,
-    PRIMARY KEY (stasjonsID)
+    PRIMARY KEY (stasjonID)
 );
 
 CREATE TABLE InngaarITogrute (
     ruteID INTEGER NOT NULL,
-    stasjonsID INTEGER NOT NULL,
-    ankomsttid CHAR(23) NOT NULL,
-    avgangstid CHAR(23) NOT NULL,
+    stasjonID INTEGER NOT NULL,
+    ankomsttid CHAR(4),
+    avgangstid CHAR(4),
     FOREIGN KEY (ruteID) REFERENCES Togrute(ruteID) ON DELETE CASCADE,
-    FOREIGN KEY (stasjonsID) REFERENCES Stasjon(stasjonsID) ON DELETE CASCADE,
-    PRIMARY KEY (ruteID, stasjonsID)
+    FOREIGN KEY (stasjonID) REFERENCES Stasjon(stasjonID) ON DELETE CASCADE,
+    PRIMARY KEY (ruteID, stasjonID)
 );
 
 CREATE TABLE Banestrekning(
-    banestrekningID INTEGER AUTO INCREMENT,
+    banestrekningID INTEGER,
     banestrekningNavn VARCHAR(30) NOT NULL,
     driftsenergi CHAR(1) NOT NULL,
     CONSTRAINT 'diesel/elektrisk' CHECK(driftsenergi IN ('d', 'e')),
@@ -43,7 +43,7 @@ CREATE TABLE Banestrekning(
 );
 
 CREATE TABLE Delstrekning(
-    delstrekningID INTEGER AUTO INCREMENT,
+    delstrekningID INTEGER,
     banestrekningID INTEGER NOT NULL,
     lengde INTEGER NOT NULL,
     erDobbeltspor BOOLEAN NOT NULL,
@@ -80,8 +80,8 @@ CREATE TABLE BestarAvDelstrekninger(
 );
 
 CREATE TABLE Vogn(
-    vognID INTEGER AUTO INCREMENT,
-    vognType VARCHAR(10) NOT NULL,
+    vognID INTEGER,
+    vognType VARCHAR(5) NOT NULL,
     CONSTRAINT 'sitte/sove' CHECK(vognType IN ('sitte', 'sove'))
     PRIMARY KEY(vognID)
 );
@@ -117,7 +117,7 @@ CREATE TABLE Sete (
 );
 
 CREATE TABLE Togruteforekomst(
-    forekomstID INTEGER AUTO INCREMENT,
+    forekomstID INTEGER,
     ruteID INTEGER NOT NULL,
     dato CHAR(23) NOT NULL,
     FOREIGN KEY (ruteID) REFERENCES Togrute(ruteID) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -125,15 +125,15 @@ CREATE TABLE Togruteforekomst(
 );
 
 CREATE TABLE Kunde (
-    kundenummer INTEGER AUTO INCREMENT,
+    kundenummer INTEGER,
     navn VARCHAR(30) NOT NULL,
-    epost VARCHAR(35) NOT NULL,
-    tlf VARCHAR(15) NOT NULL,
+    epost VARCHAR(35) NOT NULL UNIQUE,
+    tlf VARCHAR(15) NOT NULL UNIQUE,
     PRIMARY KEY (kundenummer)
 );
 
 CREATE TABLE Ordre (
-    ordrenummer INTEGER AUTO INCREMENT,
+    ordrenummer INTEGER,
     dato CHAR(23) NOT NULL,
     kundenummer INTEGER NOT NULL,
     FOREIGN KEY (kundenummer) REFERENCES Kunde(kundenummer) ON DELETE CASCADE,
@@ -141,7 +141,7 @@ CREATE TABLE Ordre (
 );
 
 CREATE TABLE Billett (
-    billettID INTEGER AUTO INCREMENT,
+    billettID INTEGER,
     forekomstID INTEGER NOT NULL,
     ordrenummer INTEGER NOT NULL,
     FOREIGN KEY (ordrenummer) REFERENCES Ordre(ordrenummer) ON DELETE CASCADE,

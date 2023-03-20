@@ -4,13 +4,9 @@ con = sql.connect('tog.db')
 c = con.cursor()
 
 def main():
-    brukerhistorie = input(f"Skriv en bokstav mellom a og h for å velge brukerhistorie, trykk enter for ferdig: ")
+    brukerhistorie = input(f"Skriv en bokstav mellom c og h for å velge brukerhistorie, trykk enter for å avslutte programmet: ")
     if brukerhistorie == "":
         print("Programmet er ferdig")
-    elif brukerhistorie == "a":
-        BH_a()
-    elif brukerhistorie == "b":
-        BH_b()
     elif brukerhistorie == "c":
         BH_c()
     elif brukerhistorie == "d":
@@ -27,41 +23,50 @@ def main():
         print("Ugyldig input, prøv igjen")
         main()
 
-def BH_a():
-    stasjoner = {"Trondheim":5.1, "Steinskjer":3.6,"  Mosjoen":6.8,"Mo i Rana":3.5,"Fauske":34, "Bodo": 4.1}
-    id = 0
-    for stasjonsnavn,moh in stasjoner.items():
-        c.execute(" INSERT INTO Stasjon VALUES (:id, :moh, :stasjonsnavn)", {id: id, moh: moh, stasjonsnavn: stasjonsnavn})
-        id += 1
-    con.commit()
-
-def BH_b():
-    # Legger til vogner
-    c.execute(" INSERT INTO Vogn VALUES (0, sitte)")
-    c.execute(" INSERT INTO Vogn VALUES (1, sove)")
-
-    # Legger til operatør
-    c.execute(" INSERT INTO Operatoer VALUES (0, 'SJ')")
-
-    # Legger til InngaarITogrute (Endre formatering på tidspunkt, 5min pause)
-    c.execute(" INSERT INTO InngaarITogrute VALUES (0, 0, 07:44, 07:49)") # Trondheim
-    c.execute(" INSERT INTO InngaarITogrute VALUES (0, 1, 09:46, 09:51)") # Steinskjer
-    c.execute(" INSERT INTO InngaarITogrute VALUES (0, 2, 13:15, 13:20)") # Mosjoen
-    c.execute(" INSERT INTO InngaarITogrute VALUES (0, 3, 14:26, 14:31)") # Mo i Rana
-    c.execute(" INSERT INTO InngaarITogrute VALUES (0, 4, 16:44, 16:49)") # Fauske
-    c.execute(" INSERT INTO InngaarITogrute VALUES (0, 5, 17:29, 17:34)") # Bodo
-
-    # Legger til rutetabell
-
-
 def BH_c():
-    pass
+    stasjon = input("Skriv inn stasjonsnavn: ")
+    try:
+        id = c.execute("SELECT stasjonID FROM Stasjon WHERE stasjonsnavn = :stasjon", {"stasjon": stasjon})
+        con.commit()
+        ukedag = input("Skriv inn ukedag på norsk (bruke 'o' i stedet for 'ø'): ").lower()
+        c.execute("SELECT t.ruteID, dag.ukedag FROM Togrute as t JOIN StarterPaaDag as dag ON t.ruteID = dag.ruteID")
+
+        c.execute("SELECT * FROM InngaarITogrute WHERE stasjonsID = :id", {"id": id})
+        print(c.fetchall())
+    except:
+        print("Fant ikke stasjon. Dobbelsjekk at du stavet navnet riktig.")
 
 def BH_d():
     pass
 
 def BH_e(): 
-    pass
+    navn = input("Skriv inn navnet ditt: ")
+    # Sjekker om telefonnummeret er unikt
+    unikTlf = False
+    while not unikTlf :
+        tlf = input("Skriv inn telefonnummeret ditt: ")
+        antall = c.execute("SELECT COUNT(tlf) FROM Kunde WHERE tlf = :tlf", {"tlf": tlf} )
+        con.commit()
+        if (antall == 0):
+            unikTlf = True
+        else:
+            print("Telefonnummeret er allerede registrert. Prøv igjen.")
+
+    # Sjekker om eposten er unik
+    unikEpost = False
+    while not unikEpost :
+        epost = input("Skriv inn eposten din: ")
+        antall = c.execute("SELECT COUNT(epost) FROM Kunde WHERE epost = :epost", {"epost": epost} )
+        con.commit()
+        if (antall == 0):
+            unikEpost = True
+        else:
+            print("Eposten er allerede registrert. Prøv igjen.")
+
+    # Legger til kunde i databasen
+    c.execute("INSERT INTO Kunde (navn, tlf, epost) VALUES (:navn, :tlf, :epost)", {"navn": navn, "tlf": tlf, "epost": epost})
+
+
 
 def BH_f():
     pass
@@ -71,6 +76,5 @@ def BH_g():
 
 def BH_h():
     pass
-
 
 main()
