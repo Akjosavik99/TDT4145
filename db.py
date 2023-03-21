@@ -24,22 +24,154 @@ def main():
         print("Ugyldig input, prøv igjen")
         main()
 
-def BH_c():
-    stasjon = input("Skriv inn stasjonsnavn: ").capitalize().strip() #Lager stor forbokstav og fjerner mellomrom
-    print(stasjon)
-    try:
-        id = c.execute("SELECT stasjonID FROM Stasjon WHERE stasjonsnavn = :stasjon", {"stasjon": stasjon})
-        con.commit()
-        print(id)
-        ukedag = input("Skriv inn ukedag på norsk (bruk 'o' i stedet for 'ø'): ").lower()
-        c.execute("SELECT t.ruteID, dag.ukedag FROM Togrute as t JOIN StarterPaaDag as dag ON t.ruteID = dag.ruteID WHERE dag.ukedag = :ukedag AND t.ruteID = :id", {"ukedag": ukedag, "id": id})
-        con.commit()
-        ruter = c.fetchall()
-        print(ruter)
+# For en stasjon som oppgis, skal bruker få ut alle togruter som er innom stasjonen en gitt ukedag.
+# Denne funksjonaliteten skal programmeres.
 
-    except sql.Error as e:
-        print("Fant ikke stasjon. Dobbelsjekk at du stavet navnet riktig.")
-        print(f"Feilkode: {e}")
+def BH_c():
+    c.execute("SELECT * FROM stasjon")
+    muligeStartStasjoner = c.fetchall()
+    print(muligeStartStasjoner)
+    print("___________\nMulige startstasjoner:\n\n")
+    print("ID | StasjonNavn")
+    for stasjon in muligeStartStasjoner:
+        print(str(stasjon[0]) + " | " + stasjon[2])
+
+    stasjonNavn = muligeStartStasjoner[int(input("Hvor starter turen? (Velg en ID): "))-1][2]
+
+
+    ukedager = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lordag", "sondag"]
+    print("___________\nMulige dager:\n\n")
+    print("ID | dag")
+    for i in range(len(ukedager)):
+        print(str(i) + " | " + ukedager[i])
+    dagNummer = int(input("Hvilken ukedag ønsker du å reise? (Velg en ID): "))
+    ukedag = ukedager[dagNummer]
+
+    # Må sjekke hvilke ruter som er innom stasjonen på ukedagen + neste dag da en rute
+    # kan starte på en ukedag og ende på neste ukedag (nattog)
+    if ukedag == len(ukedager):
+        sjekkUkedag = [ukedag, ukedag[0]]
+    else:
+        sjekkUkedag = [ukedag, ukedag[dagNummer+1] ]
+
+    c.execute("""
+    SELECT dag.ukedag, t.ruteID FROM StarterPaaDag as dag
+    JOIN Togrute as t ON dag.ruteID = t.ruteID
+    WHERE (dag.ukedag = :ukedag1 OR dag.ukedag = :ukedag2)
+    """, {"ukedag1": sjekkUkedag[0], "ukedag2": sjekkUkedag[1]})
+
+    #Finner alle ruter som kjøres den valgte dagen og neste
+    aktuelleRuter = []
+    for el in c.fetchall():
+        if (el[1] not in aktuelleRuter):
+            aktuelleRuter.append(el[1])
+    stasjonerMedDagTidListe = []
+    # Henter alle stasjoner på en rute
+    for rute in aktuelleRuter:
+        stasjonerIRekkefølge = listeMedStasjoner(rute)
+        stasjonerMedDagTid = []
+        for stasjon in stasjonerIRekkefølge:
+            if stasjon == stasjonerIRekkefølge[0]:
+                c.execute("""
+                SELECT s.stasjonsnavn, i.ankomsttid, i.avgangstid, dag.ukedag FROM Togrute as t
+                JOIN InngaarITogrute as i ON t.ruteID = i.ruteID
+                JOIN Stasjon as s ON s.stasjonID = i.stasjonID
+                JOIN StarterPaaDag as dag ON t.ruteID = dag.ruteID
+                WHERE t.ruteID = :rute AND s.stasjonsnavn = :stasjon AND dag.ukedag = :ukedag1
+                """, {"rute": rute, "stasjon": stasjon, "ukedag1": sjekkUkedag[0] })
+                resultat = c.fetchall()[0]
+                stasjonerMedDagTid.append([stasjon, resultat[1], resultat[2], resultat[3], rute])
+            else:
+                c.execute("""
+                SELECT s.stasjonsnavn, i.ankomsttid, i.avgangstid, dag.ukedag FROM Togrute as t
+                JOIN InngaarITogrute as i ON t.ruteID = i.ruteID
+                JOIN Stasjon as s ON s.stasjonID = i.stasjonID
+                JOIN StarterPaaDag as dag ON t.ruteID = dag.ruteID
+                WHERE t.ruteID = :rute AND s.stasjonsnavn = :stasjon AND (dag.ukedag = :ukedag1 OR dag.ukedag = :ukedag2)
+                """, {"rute": rute, "stasjon": stasjon, "ukedag1": sjekkUkedag[0], "ukedag2": sjekkUkedag[1]})
+                resultat = c.fetchall()[0]
+                ankomsttid = int(resultat[1])
+                # Sjekker om ankomsttid er før avgangstid fra forrige stasjon (ny dag)
+                if (ankomsttid - int(stasjonerMedDagTid[-1][2])) < 0:
+                    if ukedager.index(resultat[3]) == 6:
+                        dag = "mandag"
+                    else:
+                        dag = ukedager[ukedager.index(resultat[3])+1]        
+                else:
+                    dag = stasjonerMedDagTid[-1][3]
+                
+                # Legger til stasjonen i listen med navn, ankomsttid, avgangstid, dag, rute
+                stasjonerMedDagTid.append([stasjon, resultat[1], resultat[2], dag, rute])
+        stasjonerMedDagTidListe.append(stasjonerMedDagTid)
+
+    # Printer resultatet
+    print(f"Ruter som er innom {stasjonNavn} på {ukedag}:")
+    for stasjonerMedDagTid in stasjonerMedDagTidListe:
+        for stasjon in stasjonerMedDagTid:
+            # Printer ruten hvis dag og stasjonnavn stemmer
+            if (stasjon[0] == stasjonNavn and stasjon[3] == ukedag):
+                print(f"Rute {stasjon[4]}")
+
+
+# Funksjon som returnerer en liste med stasjonene i riktig rekkefølge
+def listeMedStasjoner(ruteID):
+    c.execute("""
+    SELECT t.ruteID, d.delstrekningID, s.stasjonID, s.stasjonsnavn  FROM Togrute as t
+    JOIN BestarAvDelstrekninger as b ON b.ruteID = t.ruteID
+    JOIN Delstrekning as d ON b.delstrekningID = d.delstrekningID
+    JOIN InngaarITogrute as i ON t.ruteID = i.ruteID
+    JOIN Stasjon as s ON s.stasjonID = i.stasjonID
+    JOIN BestarAvStasjon as bs ON bs.stasjonID = s.stasjonID AND d.delstrekningID = bs.delstrekningID
+    WHERE t.ruteID = :ruteID
+    """, {"ruteID": ruteID})
+    resultat = c.fetchall()
+    stasjoner = []
+    for stasjon in resultat:
+        if stasjon[3] not in stasjoner:
+            stasjoner.append(stasjon[3])
+
+    # Sorterer stasjonene i riktig rekkefølge
+    delstrekninger = {} #delstrekningID : [stasjon-stasjon]
+    for i in range(len(resultat)):
+        if (resultat[i][1] in delstrekninger):
+            delstrekninger[resultat[i][1]].append(resultat[i][3])
+        else:
+            delstrekninger[resultat[i][1]] = [resultat[i][3]]
+
+    # Finner startstasjonen for ruten
+    c.execute("""
+    SELECT s.stasjonsnavn, t.ruteID, st.stasjonsType FROM Togrute as t
+    JOIN StasjonITogrute as st ON st.ruteID = t.ruteID
+    JOIN Stasjon as s ON s.stasjonID = st.stasjonID
+    WHERE t.ruteID = :ruteID AND st.stasjonsType = "start"
+    """, {"ruteID": ruteID})
+    startStasjon = c.fetchall()[0][0]
+
+    # returnerer liste med stasjonene i rekkefølge
+    return settRekkefølge(startStasjon, delstrekninger, [])
+
+# Funksjon som setter stasjonene i riktig rekkefølge basert på en startstasjon,
+# en dictionary med {delstrekningID : [stasjon-stasjon]} og en tom liste
+def settRekkefølge(startStasjon, delstrekninger, rekkefølgeListe):
+    if len(rekkefølgeListe) == 0:
+        for delstrekning in delstrekninger.values():
+            for stasjon in delstrekning:
+                if stasjon == startStasjon:
+                    rekkefølgeListe.append(stasjon)
+    else:
+        for delstrekning in delstrekninger.values():
+            for stasjon in delstrekning:
+                #Sjekker om siste stasjon i rekkefølgeListe er lik en av stasjonene i delstrekningen
+                if (stasjon == rekkefølgeListe[-1]):
+                    # Legger til stasjonen hvis den ikke allerede er lagt til
+                    if (delstrekning.index(stasjon) == 0 and delstrekning[1] not in rekkefølgeListe):
+                        rekkefølgeListe.append(delstrekning[1])
+                    elif (delstrekning.index(stasjon) == 1 and delstrekning[0] not in rekkefølgeListe):
+                        rekkefølgeListe.append(delstrekning[0])
+    if (len(rekkefølgeListe) < len(delstrekninger)+1):
+        settRekkefølge(startStasjon, delstrekninger, rekkefølgeListe)
+    return rekkefølgeListe
+
 
 #Bruker skal kunne søke etter togruter som går mellom en startstasjon og en sluttstasjon, med
 #utgangspunkt i en dato og et klokkeslett. Alle ruter den samme dagen og den neste skal
@@ -142,10 +274,16 @@ def BH_e():
 def BH_f():
     pass
 
+# Registrerte kunder skal kunne finne ledige billetter for en oppgitt strekning på en ønsket togrute
+# og kjøpe de billettene hen ønsker. Denne funksjonaliteten skal programmeres.
+# Pass på at dere bare selger ledige plasser
 def BH_g():
+
+
     pass
 
 def BH_h():
     pass
 
-main()
+BH_c()
+# main()
