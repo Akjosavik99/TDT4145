@@ -1,5 +1,5 @@
 import sqlite3 as sql
-import datetime
+from datetime import datetime, timedelta
 
 con = sql.connect('tog.db')
 c = con.cursor()
@@ -67,6 +67,7 @@ def BH_c():
             aktuelleRuter.append(el[1])
     stasjonerMedDagTidListe = []
     # Henter alle stasjoner på en rute
+
     for rute in aktuelleRuter:
         stasjonerIRekkefølge = listeMedStasjoner(rute)
         stasjonerMedDagTid = []
@@ -178,67 +179,131 @@ def settRekkefølge(startStasjon, delstrekninger, rekkefølgeListe):
 #returneres, sortert på tid. Denne funksjonaliteten skal programmeres.
 
 def BH_d():
+    
     c.execute("SELECT * FROM stasjon")
     muligeStartStasjoner = c.fetchall()
+    print(muligeStartStasjoner)
     print("___________\nMulige startstasjoner:\n\n")
     print("ID | StasjonNavn")
     for stasjon in muligeStartStasjoner:
         print(str(stasjon[0]) + " | " + stasjon[2])
 
-    startStasjon = int(input("Hvor starter turen? (Velg en ID):\n"))
+    startStasjon = muligeStartStasjoner[int(input("Hvor starter turen? (Velg en ID): "))-1][2]
+    sluttStasjon = muligeStartStasjoner[int(input("Hvor slutter turen? (Velg en ID): "))-1][2]
 
-    print("____________\nStasjoner du kan komme deg til" )
+    # Henter dato og tid fra bruker
+    klokkeslett = input("Angi dato og tidspunkt (YYYY-MM-DD HH:MM): ")+":00" #Legger til sekunder
+    dato1 = datetime.strptime(klokkeslett[:10], "%Y-%m-%d") # Konverterer dato-strengen til en datetime objekt
+    dato2 = dato1 + timedelta(days=1) # Legger til én dag
+    dato1 = dato1.strftime("%Y-%m-%d") # Konverterer datetime objektet tilbake til en streng
+    dato2 = dato2.strftime("%Y-%m-%d") # Konverterer datetime objektet tilbake til en streng
+    print(dato1)
+    print(dato2)
 
-    # Finner mulige sluttstasjoner fra startstasjon
-    muligeEndeStasjoner = []
-    erNesteStasjon = True
-    stasjonOgTeste = startStasjon
-    while erNesteStasjon:
-        c.execute("SELECT * FROM Stasjon WHERE (Stasjon.stasjonID = (SELECT stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :stasjonId and S.stasjonID = B.stasjonID and B.stasjonsType = 'start')) and B.stasjonsType = 'ende')))", {"stasjonId": stasjonOgTeste})
-        muligNesteStasjon = c.fetchall()
-        if muligNesteStasjon == []:
-            erNesteStasjon = False
-        for stasjon in muligNesteStasjon:
-            muligeEndeStasjoner.append(stasjon)
-            stasjonOgTeste = stasjon[0]
+    # Henter alle ruter som går på gitte datoer
+    c.execute( """
+    SELECT tf.dato, tf.ruteID FROM Togruteforekomst as tf
+    WHERE tf.dato LIKE :dato1 OR tf.dato LIKE :dato2
+    """, (dato1 + '%',dato2 + '%')) 
 
-    print("ID | StasjonNavn")
-    for stasjon in muligeEndeStasjoner:
-        print(str(stasjon[0]) + " | " + stasjon[2])
-    sluttStasjon = str(input("Hvor slutter turen? (Velg en ID):\n"))
+    ruter = c.fetchall()
 
-
-    dato = datetime.datetime.strptime(input("Når ønsker du å reise? (YYYY-MM-DD HH:MM):\n"), "%Y-%m-%d %H:%M")
-
-    #Finner først alle ruter som går mellom de to stasjonene.
-    kompatibleRuter = []
-    try:
-        c.execute("SELECT ruteID FROM InngaarITogrute WHERE stasjonID = :stasjonId", {"stasjonId": str(startStasjon)})
-        ruterPåStart = c.fetchall()
-        c.execute("SELECT ruteID FROM InngaarITogrute WHERE stasjonID = :stasjonId", {"stasjonId": str(sluttStasjon)})
-        ruterPåSlutt = c.fetchall()
-        for rute in ruterPåStart:
-            if rute in ruterPåSlutt:
-                kompatibleRuter.append(rute[0])
-    except:
-        raise Exception("Faen i hælvete")
-
-    # Finner så ruter som er innenfor en dag på den valgte datoen og tiden.
-    ruter = []
-    try:
-        for rute in kompatibleRuter:
-            c.execute("SELECT * FROM Togruteforekomst WHERE ruteID = :ruteID", {"ruteID": rute})
-            forekomster = c.fetchall()
-            for forekomst in forekomster:
-                if datetime.datetime.strptime(forekomst[2], "%Y-%m-%d %H:%M:%S") > dato and datetime.datetime.strptime(forekomst[2], "%Y-%m-%d %H:%M:%S") < (dato + datetime.timedelta(days = 1)):
-                    ruter.append(forekomst)
-    except:
-        raise Exception("Kuk i ræv")
-
-    print("Du kan ta følgende ruter:")
-    print("RUTE | Avgangstid")
+    # Henter ut alle stasjoner i rutene
+    ruteListe = []
     for rute in ruter:
-        print(str(rute[1]) + " | " + rute[2])
+        ruteListe.append(rute[1])
+
+    # ruteListe = list(dict.fromkeys(ruteListe)) # Fjerner duplikater
+
+    # stasjonerIRekkefølgeListe = {} # Dictionary med {ruteID : [stasjon-stasjon-stasjon]}
+    for rute in ruteListe:
+        if (startStasjon in listeMedStasjoner(rute) and sluttStasjon in listeMedStasjoner(rute)):
+            # stasjonerIRekkefølgeListe[rute] = listeMedStasjoner(rute)
+            # print(listeMedStasjoner(rute))
+
+            c.execute("""
+                SELECT t.ruteID, s.stasjonsnavn, i.ankomsttid, i.avgangstid FROM Togrute as t
+                JOIN InngaarITogrute AS i ON i.ruteID = t.ruteID
+                JOIN Stasjon AS s ON s.stasjonID = i.stasjonID
+                WHERE t.ruteID = :ruteID AND (s.stasjonsnavn = :startStasjon OR s.stasjonsnavn = :sluttStasjon)
+            """, {"ruteID" : rute, "startStasjon": startStasjon, "sluttStasjon": sluttStasjon } )
+            print()
+            print(c.fetchall())
+    
+    # print(stasjonerIRekkefølgeListe)
+
+
+
+    
+
+
+
+
+
+
+
+
+    # c.execute("SELECT * FROM stasjon")
+    # muligeStartStasjoner = c.fetchall()
+    # print("___________\nMulige startstasjoner:\n\n")
+    # print("ID | StasjonNavn")
+    # for stasjon in muligeStartStasjoner:
+    #     print(str(stasjon[0]) + " | " + stasjon[2])
+
+    # startStasjon = int(input("Hvor starter turen? (Velg en ID):\n"))
+
+    # print("____________\nStasjoner du kan komme deg til" )
+
+    # # Finner mulige sluttstasjoner fra startstasjon
+    # muligeEndeStasjoner = []
+    # erNesteStasjon = True
+    # stasjonOgTeste = startStasjon
+    # while erNesteStasjon:
+    #     c.execute("SELECT * FROM Stasjon WHERE (Stasjon.stasjonID = (SELECT stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :stasjonId and S.stasjonID = B.stasjonID and B.stasjonsType = 'start')) and B.stasjonsType = 'ende')))", {"stasjonId": stasjonOgTeste})
+    #     muligNesteStasjon = c.fetchall()
+    #     if muligNesteStasjon == []:
+    #         erNesteStasjon = False
+    #     for stasjon in muligNesteStasjon:
+    #         muligeEndeStasjoner.append(stasjon)
+    #         stasjonOgTeste = stasjon[0]
+
+    # print("ID | StasjonNavn")
+    # for stasjon in muligeEndeStasjoner:
+    #     print(str(stasjon[0]) + " | " + stasjon[2])
+    # sluttStasjon = str(input("Hvor slutter turen? (Velg en ID):\n"))
+
+
+    # dato = datetime.datetime.strptime(input("Når ønsker du å reise? (YYYY-MM-DD HH:MM):\n"), "%Y-%m-%d %H:%M")
+
+    # #Finner først alle ruter som går mellom de to stasjonene.
+    # kompatibleRuter = []
+    # try:
+    #     c.execute("SELECT ruteID FROM InngaarITogrute WHERE stasjonID = :stasjonId", {"stasjonId": str(startStasjon)})
+    #     ruterPåStart = c.fetchall()
+    #     c.execute("SELECT ruteID FROM InngaarITogrute WHERE stasjonID = :stasjonId", {"stasjonId": str(sluttStasjon)})
+    #     ruterPåSlutt = c.fetchall()
+    #     for rute in ruterPåStart:
+    #         if rute in ruterPåSlutt:
+    #             kompatibleRuter.append(rute[0])
+    # except:
+    #     raise Exception("Faen i hælvete")
+
+    # # Finner så ruter som er innenfor en dag på den valgte datoen og tiden.
+    # ruter = []
+    # try:
+    #     for rute in kompatibleRuter:
+    #         c.execute("SELECT * FROM Togruteforekomst WHERE ruteID = :ruteID", {"ruteID": rute})
+    #         forekomster = c.fetchall()
+    #         for forekomst in forekomster:
+    #             if datetime.datetime.strptime(forekomst[2], "%Y-%m-%d %H:%M:%S") > dato and datetime.datetime.strptime(forekomst[2], "%Y-%m-%d %H:%M:%S") < (dato + datetime.timedelta(days = 1)):
+    #                 ruter.append(forekomst)
+    # except:
+    #     raise Exception("Kuk i ræv")
+
+    # print("Du kan ta følgende ruter:")
+    # print("RUTE | Avgangstid")
+    # for rute in ruter:
+    #     print(str(rute[1]) + " | " + rute[2])
 
 
 
@@ -285,5 +350,5 @@ def BH_g():
 def BH_h():
     pass
 
-BH_c()
+BH_d()
 # main()

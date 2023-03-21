@@ -248,13 +248,13 @@ INSERT INTO StarterPaaDag (ruteID, ukedag) VALUES (1, "mandag");
 
 INSERT INTO
     Togruteforekomst(ruteID, dato)
-VALUES (1, "2023-03-03 07:49:00");
+VALUES (1, "2023-04-03 07:49:00");
 
 INSERT INTO StarterPaaDag (ruteID, ukedag) VALUES (1, "tirsdag");
 
 INSERT INTO
     Togruteforekomst(ruteID, dato)
-VALUES (1, "2023-03-04 07:49:00");
+VALUES (1, "2023-04-04 07:49:00");
 
 INSERT INTO StarterPaaDag (ruteID, ukedag) VALUES (1, "onsdag");
 
@@ -268,13 +268,13 @@ INSERT INTO StarterPaaDag (ruteID, ukedag) VALUES (2, "mandag");
 
 INSERT INTO
     Togruteforekomst(ruteID, dato)
-VALUES (2, "2023-03-03 23:05:00");
+VALUES (2, "2023-04-03 23:05:00");
 
 INSERT INTO StarterPaaDag (ruteID, ukedag) VALUES (2, "tirsdag");
 
 INSERT INTO
     Togruteforekomst(ruteID, dato)
-VALUES (2, "2023-03-04 23:05:00");
+VALUES (2, "2023-04-04 23:05:00");
 
 INSERT INTO StarterPaaDag (ruteID, ukedag) VALUES (2, "onsdag");
 
@@ -292,13 +292,13 @@ INSERT INTO StarterPaaDag (ruteID, ukedag) VALUES (3, "mandag");
 
 INSERT INTO
     Togruteforekomst(ruteID, dato)
-VALUES (3, "2023-03-03 08:11:00");
+VALUES (3, "2023-04-03 08:11:00");
 
 INSERT INTO StarterPaaDag (ruteID, ukedag) VALUES (3, "tirsdag");
 
 INSERT INTO
     Togruteforekomst(ruteID, dato)
-VALUES (3, "2023-03-04 08:11:00");
+VALUES (3, "2023-04-04 08:11:00");
 
 INSERT INTO StarterPaaDag (ruteID, ukedag) VALUES (3, "onsdag");
 
