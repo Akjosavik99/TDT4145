@@ -490,6 +490,50 @@ VALUES (3, 1, "1413", NULL);
 
 -- Trondheim
 
+-- Legger til StasjonITogrute
+
+-- Rute 1, dagtog Trondheim-Bodoe
+
+INSERT INTO
+    StasjonITogrute (ruteID, stasjonID, stasjonsType)
+    VALUES (1, 1, "start");
+
+ -- Trondheim
+
+INSERT INTO
+    StasjonITogrute (ruteID, stasjonID, stasjonsType)
+    VALUES (1, 6, "ende");
+
+ -- Bodoe
+
+ -- Rute 2, nattog Trondheim-Bodoe
+
+INSERT INTO
+    StasjonITogrute (ruteID, stasjonID, stasjonsType)
+    VALUES (2, 1, "start");
+
+ -- Trondheim
+
+INSERT INTO
+    StasjonITogrute (ruteID, stasjonID, stasjonsType)
+    VALUES (2, 6, "ende");
+
+ -- Bodoe
+
+-- Rute 3, morgentog Mo i Rana - Trondheim
+
+INSERT INTO
+    StasjonITogrute (ruteID, stasjonID, stasjonsType)
+    VALUES (3, 4, "start");
+
+ -- Mo i Rana
+
+INSERT INTO
+    StasjonITogrute (ruteID, stasjonID, stasjonsType)
+    VALUES (3, 1, "ende");
+
+-- Trondheim
+
 -- Legger til BestarAvDelstrekninger
 
 -- Rute 1, dagtog Trondheim-Bodoe

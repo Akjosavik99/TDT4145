@@ -34,6 +34,16 @@ CREATE TABLE InngaarITogrute (
     PRIMARY KEY (ruteID, stasjonID)
 );
 
+CREATE TABLE StasjonITogrute (
+    ruteID INTEGER NOT NULL,
+    stasjonID INTEGER NOT NULL,
+    stasjonsType VARCHAR(5),
+    CONSTRAINT 'ende/start' CHECK(stasjonsType IN ('start', 'ende')),
+    FOREIGN KEY (ruteID) REFERENCES Togrute(ruteID) ON DELETE CASCADE,
+    FOREIGN KEY (stasjonID) REFERENCES Stasjon(stasjonID) ON DELETE CASCADE,
+    PRIMARY KEY (ruteID, stasjonID)
+)
+
 CREATE TABLE Banestrekning(
     banestrekningID INTEGER,
     banestrekningNavn VARCHAR(30) NOT NULL,
