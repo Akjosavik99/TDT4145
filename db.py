@@ -1,4 +1,5 @@
 import sqlite3 as sql
+import datetime
 
 con = sql.connect('tog.db')
 c = con.cursor()
@@ -19,7 +20,7 @@ def main():
         BH_g()
     elif brukerhistorie == "h":
         BH_h()
-    else:   
+    else:
         print("Ugyldig input, prøv igjen")
         main()
 
@@ -40,10 +41,76 @@ def BH_c():
         print("Fant ikke stasjon. Dobbelsjekk at du stavet navnet riktig.")
         print(f"Feilkode: {e}")
 
-def BH_d():
-    pass
+#Bruker skal kunne søke etter togruter som går mellom en startstasjon og en sluttstasjon, med
+#utgangspunkt i en dato og et klokkeslett. Alle ruter den samme dagen og den neste skal
+#returneres, sortert på tid. Denne funksjonaliteten skal programmeres.
 
-def BH_e(): 
+def BH_d():
+    c.execute("SELECT * FROM stasjon")
+    muligeStartStasjoner = c.fetchall()
+    print("___________\nMulige startstasjoner:\n\n")
+    print("ID | StasjonNavn")
+    for stasjon in muligeStartStasjoner:
+        print(str(stasjon[0]) + " | " + stasjon[2])
+
+    startStasjon = int(input("Hvor starter turen? (Velg en ID):\n"))
+
+    print("____________\nStasjoner du kan komme deg til" )
+
+    # Finner mulige sluttstasjoner fra startstasjon
+    muligeEndeStasjoner = []
+    erNesteStasjon = True
+    stasjonOgTeste = startStasjon
+    while erNesteStasjon:
+        c.execute("SELECT * FROM Stasjon WHERE (Stasjon.stasjonID = (SELECT stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :stasjonId and S.stasjonID = B.stasjonID and B.stasjonsType = 'start')) and B.stasjonsType = 'ende')))", {"stasjonId": stasjonOgTeste})
+        muligNesteStasjon = c.fetchall()
+        if muligNesteStasjon == []:
+            erNesteStasjon = False
+        for stasjon in muligNesteStasjon:
+            muligeEndeStasjoner.append(stasjon)
+            stasjonOgTeste = stasjon[0]
+
+    print("ID | StasjonNavn")
+    for stasjon in muligeEndeStasjoner:
+        print(str(stasjon[0]) + " | " + stasjon[2])
+    sluttStasjon = str(input("Hvor slutter turen? (Velg en ID):\n"))
+
+
+    dato = datetime.datetime.strptime(input("Når ønsker du å reise? (YYYY-MM-DD HH:MM):\n"), "%Y-%m-%d %H:%M")
+
+    #Finner først alle ruter som går mellom de to stasjonene.
+    kompatibleRuter = []
+    try:
+        c.execute("SELECT ruteID FROM InngaarITogrute WHERE stasjonID = :stasjonId", {"stasjonId": str(startStasjon)})
+        ruterPåStart = c.fetchall()
+        c.execute("SELECT ruteID FROM InngaarITogrute WHERE stasjonID = :stasjonId", {"stasjonId": str(sluttStasjon)})
+        ruterPåSlutt = c.fetchall()
+        for rute in ruterPåStart:
+            if rute in ruterPåSlutt:
+                kompatibleRuter.append(rute[0])
+    except:
+        raise Exception("Faen i hælvete")
+
+    # Finner så ruter som er innenfor en dag på den valgte datoen og tiden.
+    ruter = []
+    try:
+        for rute in kompatibleRuter:
+            c.execute("SELECT * FROM Togruteforekomst WHERE ruteID = :ruteID", {"ruteID": rute})
+            forekomster = c.fetchall()
+            for forekomst in forekomster:
+                if datetime.datetime.strptime(forekomst[2], "%Y-%m-%d %H:%M:%S") > dato and datetime.datetime.strptime(forekomst[2], "%Y-%m-%d %H:%M:%S") < (dato + datetime.timedelta(days = 1)):
+                    ruter.append(forekomst)
+    except:
+        raise Exception("Kuk i ræv")
+
+    print("Du kan ta følgende ruter:")
+    print("RUTE | Avgangstid")
+    for rute in ruter:
+        print(str(rute[1]) + " | " + rute[2])
+
+
+
+def BH_e():
     navn = input("Skriv inn navnet ditt: ")
     # Sjekker om telefonnummeret er unikt
     unikTlf = False
@@ -58,7 +125,7 @@ def BH_e():
 
     # Sjekker om eposten er unik
     unikEpost = False
-    while not unikEpost :
+    while not unikEpost:
         epost = input("Skriv inn eposten din: ")
         antall = c.execute("SELECT COUNT(epost) FROM Kunde WHERE epost = :epost", {"epost": epost} )
         con.commit()
