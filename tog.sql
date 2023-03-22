@@ -9,6 +9,7 @@ CREATE TABLE
     Togrute(
         ruteID INTEGER,
         operatoerID INTEGER NOT NULL,
+        hovedretning BOOLEAN,
         PRIMARY KEY(ruteID),
         FOREIGN KEY(operatoerID) REFERENCES Operatoer(operatoerID) ON DELETE CASCADE
     );

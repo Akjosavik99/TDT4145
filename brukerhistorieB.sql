@@ -206,15 +206,15 @@ INSERT INTO Operatoer (navn) VALUES ('SJ');
 
 -- Legger til togruter
 
-INSERT INTO Togrute (operatoerID) VALUES (1);
+INSERT INTO Togrute (operatoerID, hovedretning) VALUES (1, TRUE);
 
--- Rute 1, dagtog Trondheim-Bodoe
+-- Rute 1, dagtog Trondheim - bodø
 
-INSERT INTO Togrute (operatoerID) VALUES (1);
+INSERT INTO Togrute (operatoerID, hovedretning) VALUES (1, TRUE);
 
--- Rute 2, nattog Bodoe-Trondheim
+-- Rute 2, nattog Trondheim - bodø
 
-INSERT INTO Togrute (operatoerID) VALUES (1);
+INSERT INTO Togrute (operatoerID, hovedretning) VALUES (1, FALSE);
 
 -- Rute 3, morgentog Mo i Rana - Trondheim
 
@@ -495,42 +495,66 @@ VALUES (3, 1, "1413", NULL);
 -- Rute 1, dagtog Trondheim-Bodoe
 
 INSERT INTO
-    StasjonITogrute (ruteID, stasjonID, stasjonsType)
-    VALUES (1, 1, "start");
+    StasjonITogrute (
+        ruteID,
+        stasjonID,
+        stasjonsType
+    )
+VALUES (1, 1, "start");
 
- -- Trondheim
-
-INSERT INTO
-    StasjonITogrute (ruteID, stasjonID, stasjonsType)
-    VALUES (1, 6, "ende");
-
- -- Bodoe
-
- -- Rute 2, nattog Trondheim-Bodoe
+-- Trondheim
 
 INSERT INTO
-    StasjonITogrute (ruteID, stasjonID, stasjonsType)
-    VALUES (2, 1, "start");
+    StasjonITogrute (
+        ruteID,
+        stasjonID,
+        stasjonsType
+    )
+VALUES (1, 6, "ende");
 
- -- Trondheim
+-- Bodoe
+
+-- Rute 2, nattog Trondheim-Bodoe
 
 INSERT INTO
-    StasjonITogrute (ruteID, stasjonID, stasjonsType)
-    VALUES (2, 6, "ende");
+    StasjonITogrute (
+        ruteID,
+        stasjonID,
+        stasjonsType
+    )
+VALUES (2, 1, "start");
 
- -- Bodoe
+-- Trondheim
+
+INSERT INTO
+    StasjonITogrute (
+        ruteID,
+        stasjonID,
+        stasjonsType
+    )
+VALUES (2, 6, "ende");
+
+-- Bodoe
 
 -- Rute 3, morgentog Mo i Rana - Trondheim
 
 INSERT INTO
-    StasjonITogrute (ruteID, stasjonID, stasjonsType)
-    VALUES (3, 4, "start");
+    StasjonITogrute (
+        ruteID,
+        stasjonID,
+        stasjonsType
+    )
+VALUES (3, 4, "start");
 
- -- Mo i Rana
+-- Mo i Rana
 
 INSERT INTO
-    StasjonITogrute (ruteID, stasjonID, stasjonsType)
-    VALUES (3, 1, "ende");
+    StasjonITogrute (
+        ruteID,
+        stasjonID,
+        stasjonsType
+    )
+VALUES (3, 1, "ende");
 
 -- Trondheim
 
