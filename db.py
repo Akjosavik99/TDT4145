@@ -180,7 +180,39 @@ def settRekkefølge(startStasjon, delstrekninger, rekkefølgeListe):
 #returneres, sortert på tid. Denne funksjonaliteten skal programmeres.
 
 def BH_d():
+    # Henter startstasjon, sluttstasjon og dato
+    startStasjon, sluttStasjon, dato1, dato2 = hentStasjonDato()
     
+    c.execute("""
+        SELECT t.ruteID, s.stasjonsnavn, i.ankomsttid, i.avgangstid, tf.dato FROM Togrute as t
+        JOIN InngaarITogrute AS i ON i.ruteID = t.ruteID
+        JOIN Stasjon AS s ON s.stasjonID = i.stasjonID
+        JOIN Togruteforekomst AS tf on tf.ruteID = t.ruteID
+        WHERE (s.stasjonsnavn = :startStasjon OR s.stasjonsnavn = :sluttStasjon) AND (tf.dato LIKE :dato1 OR tf.dato LIKE :dato2)
+        ORDER BY tf.dato, t.ruteID ASC
+    """, {"startStasjon": startStasjon, "sluttStasjon": sluttStasjon, "dato1" : dato1, "dato2": dato2  } )
+
+    res = c.fetchall()
+    forekomster = []
+    #Lager en liste med [dato, ruteID, ankomsttid, avgangstid]
+    for i in range(0,len(res),2): #Går gjennom annenhver og legger til avgangstid og ankomsttid
+        info = [res[i][4], res[i][0],"", ""]
+        if (res[i][3] != None and res[i+1][2] != None): 
+            info[2] = res[i][3]
+            info[3] = res[i+1][2]
+            forekomster.append(info)
+
+    #Printer resultatene
+    if (len(forekomster) > 0):
+        print(f"Fra {startStasjon} til {sluttStasjon} går disse togene: ")
+        print(f"   Dato   |RuteID| Avgang | Ankomst ")
+        print("-----------------------------------")
+        for el in forekomster:
+            print(f"{el[0][:10]}|  {el[1]}   |  {el[2]}  | {el[3]}")
+    else:
+        print("Ingen ruter funnet")
+
+def hentStasjonDato():
     c.execute("SELECT * FROM stasjon")
     muligeStartStasjoner = c.fetchall()
     print(muligeStartStasjoner)
@@ -192,54 +224,14 @@ def BH_d():
     startStasjon = muligeStartStasjoner[int(input("Hvor starter turen? (Velg en ID): "))-1][2]
     sluttStasjon = muligeStartStasjoner[int(input("Hvor slutter turen? (Velg en ID): "))-1][2]
 
-    # Henter dato og tid fra bruker
-    klokkeslett = input("Angi dato og tidspunkt (YYYY-MM-DD HH:MM): ")+":00" #Legger til sekunder
+    # Henter dato fra bruker
+    klokkeslett = input("Angi dato og tidspunkt (YYYY-MM-DD: ")
     dato1 = datetime.strptime(klokkeslett[:10], "%Y-%m-%d") # Konverterer dato-strengen til en datetime objekt
     dato2 = dato1 + timedelta(days=1) # Legger til én dag
-    dato1 = dato1.strftime("%Y-%m-%d") # Konverterer datetime objektet tilbake til en streng
-    dato2 = dato2.strftime("%Y-%m-%d") # Konverterer datetime objektet tilbake til en streng
-    print(dato1)
-    print(dato2)
+    dato1 = dato1.strftime("%Y-%m-%d") + "%" # Konverterer datetime objektet tilbake til en streng og legger på % for søk i DB
+    dato2 = dato2.strftime("%Y-%m-%d") + "%" # Konverterer datetime objektet tilbake til en streng og legger på % for søk i DB
 
-    # Henter alle ruter som går på gitte datoer
-    c.execute( """
-    SELECT tf.dato, tf.ruteID FROM Togruteforekomst as tf
-    WHERE tf.dato LIKE :dato1 OR tf.dato LIKE :dato2
-    """, (dato1 + '%',dato2 + '%')) 
-
-    ruter = c.fetchall()
-
-    # Henter ut alle stasjoner i rutene
-    # ruteListe = []
-    for rute in ruter:
-        ruteListe.append(rute[1])
-
-
-    forekomster = {} #dato : [{ruteID:[avgang, ankomst]}, {ruteID:[avgang, ankomst]}]
-
-    c.execute("""
-        SELECT t.ruteID, s.stasjonsnavn, i.ankomsttid, i.avgangstid, tf.dato FROM Togrute as t
-        JOIN InngaarITogrute AS i ON i.ruteID = t.ruteID
-        JOIN Stasjon AS s ON s.stasjonID = i.stasjonID
-        JOIN Togruteforekomst AS tf on tf.ruteID = t.ruteID
-        WHERE (s.stasjonsnavn = :startStasjon OR s.stasjonsnavn = :sluttStasjon)
-        ORDER BY tf.dato, t.ruteID ASC
-    """, {"ruteID" : rute, "startStasjon": startStasjon, "sluttStasjon": sluttStasjon } )
-
-    res = c.fetchall()
-    forekomster = []
-    for i in range(len(res)):
-        # [dato, ruteID, ankomsttid, avgangstid]
-        info = [res[i][4], res[i][0],"", ""]
-        if i%2 == 0 and (res[i][3] != None and res[i+1][2] != None):
-            info[2] = res[i][3]
-            info[3] = res[i+1][2]
-            forekomster.append(info)
-    print(f"Fra {startStasjon} til {sluttStasjon} går disse togene: ")
-    print(f"Dato      |RuteID| Avgang | Ankomst ")
-    print("-----------------------------------")
-    for el in forekomster:
-        print(f"{el[0][:10]}|  {el[1]}   |  {el[2]}  | {el[3]}")
+    return startStasjon, sluttStasjon, dato1, dato2
 
 def BH_e():
     navn = input("Skriv inn navnet ditt: ")
@@ -276,11 +268,30 @@ def BH_e():
 def BH_f():
     pass
 
+
+
 # Registrerte kunder skal kunne finne ledige billetter for en oppgitt strekning på en ønsket togrute
 # og kjøpe de billettene hen ønsker. Denne funksjonaliteten skal programmeres.
 # Pass på at dere bare selger ledige plasser
 def BH_g():
-    
+    # Henter startstasjon, sluttstasjon og dato
+    startStasjon, sluttStasjon, dato, dato2 = hentStasjonDato()
+
+    c.execute("""
+        SELECT d.delstrekningID, s.billettID, s.setenummer, s.radnummer, s.vognID, b.forekomstID, t.ruteID FROM Sittebillett AS s
+        JOIN Delstrekning AS d ON s.delstrekningID = d.delstrekningID
+        JOIN Billett AS b ON b.billettID = s.billettID
+        JOIN Togruteforekomst AS tf  ON b.forekomstID = tf.forekomstID
+        JOIN Togrute AS t ON tf.ruteID = t.ruteID
+
+
+    """)
+
+    c.execute("""
+        SELECT s.setenummer, s.radnummer, s.vognID, sb.billettID FROM Sete AS s
+        LEFT JOIN Sittebillett AS sb ON (sb.vognID = s.vognID AND sb.radnummer = s.radnummer AND sb.setenummer = s.setenummer)
+        ORDER BY sb.billettID ASC
+    """)
 
     pass
 
