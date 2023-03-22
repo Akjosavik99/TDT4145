@@ -280,7 +280,6 @@ def BH_g():
     # Må først finne ut hvilken forekomstID som skal brukes
     ruteID = int(input(f"Skriv inn hvilken rute du ønsker å ta: "))
 
-
     c.execute("""
         SELECT s.setenummer, s.radnummer, s.vognID, sb.billettID, d.delstrekningID, b.forekomstID, tf.ruteID, tf.dato FROM Sete AS s
         LEFT JOIN Sittebillett AS sb ON (sb.vognID = s.vognID AND sb.radnummer = s.radnummer AND sb.setenummer = s.setenummer)
@@ -293,14 +292,6 @@ def BH_g():
 
     res = c.fetchall()
     print(res)
-
-    c.execute("""
-        SELECT s.setenummer, s.radnummer, s.vognID, sb.billettID, d.delstrekningID, b.forekomstID FROM Sete AS s
-        LEFT JOIN Sittebillett AS sb ON (sb.vognID = s.vognID AND sb.radnummer = s.radnummer AND sb.setenummer = s.setenummer)
-        LEFT JOIN Delstrekning AS d ON d.delstrekningID = sb.delstrekningID
-        LEFT JOIN Billett AS b ON b.billettID = sb.billettID
-        ORDER BY sb.billettID ASC
-    """)
 
     pass
 
