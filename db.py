@@ -182,8 +182,6 @@ def settRekkefølge(startStasjon, delstrekninger, rekkefølgeListe):
 def BH_d():
     # Henter startstasjon, sluttstasjon og dato
     startStasjon, sluttStasjon, dato1, dato2 = hentStasjonDato()
-    dato1 += "%"
-    dato2 += "%"
     
     c.execute("""
         SELECT t.ruteID, s.stasjonsnavn, i.ankomsttid, i.avgangstid, tf.dato FROM Togrute as t
@@ -230,8 +228,8 @@ def hentStasjonDato():
     klokkeslett = input("Angi dato og tidspunkt (YYYY-MM-DD: ")
     dato1 = datetime.strptime(klokkeslett[:10], "%Y-%m-%d") # Konverterer dato-strengen til en datetime objekt
     dato2 = dato1 + timedelta(days=1) # Legger til én dag
-    dato1 = dato1.strftime("%Y-%m-%d") # Konverterer datetime objektet tilbake til en streng
-    dato2 = dato2.strftime("%Y-%m-%d") # Konverterer datetime objektet tilbake til en streng
+    dato1 = dato1.strftime("%Y-%m-%d") + "%" # Konverterer datetime objektet tilbake til en streng og legger på % for søk i DB
+    dato2 = dato2.strftime("%Y-%m-%d") + "%" # Konverterer datetime objektet tilbake til en streng og legger på % for søk i DB
 
     return startStasjon, sluttStasjon, dato1, dato2
 
@@ -270,6 +268,8 @@ def BH_e():
 def BH_f():
     pass
 
+
+
 # Registrerte kunder skal kunne finne ledige billetter for en oppgitt strekning på en ønsket togrute
 # og kjøpe de billettene hen ønsker. Denne funksjonaliteten skal programmeres.
 # Pass på at dere bare selger ledige plasser
@@ -278,7 +278,19 @@ def BH_g():
     startStasjon, sluttStasjon, dato, dato2 = hentStasjonDato()
 
     c.execute("""
-    
+        SELECT d.delstrekningID, s.billettID, s.setenummer, s.radnummer, s.vognID, b.forekomstID, t.ruteID FROM Sittebillett AS s
+        JOIN Delstrekning AS d ON s.delstrekningID = d.delstrekningID
+        JOIN Billett AS b ON b.billettID = s.billettID
+        JOIN Togruteforekomst AS tf  ON b.forekomstID = tf.forekomstID
+        JOIN Togrute AS t ON tf.ruteID = t.ruteID
+
+
+    """)
+
+    c.execute("""
+        SELECT s.setenummer, s.radnummer, s.vognID, sb.billettID FROM Sete AS s
+        LEFT JOIN Sittebillett AS sb ON (sb.vognID = s.vognID AND sb.radnummer = s.radnummer AND sb.setenummer = s.setenummer)
+        ORDER BY sb.billettID ASC
     """)
 
     pass
