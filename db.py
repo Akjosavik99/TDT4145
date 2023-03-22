@@ -277,19 +277,28 @@ def BH_g():
     # Henter startstasjon, sluttstasjon og dato
     startStasjon, sluttStasjon, dato, dato2 = hentStasjonDato()
 
-    c.execute("""
-        SELECT d.delstrekningID, s.billettID, s.setenummer, s.radnummer, s.vognID, b.forekomstID, t.ruteID FROM Sittebillett AS s
-        JOIN Delstrekning AS d ON s.delstrekningID = d.delstrekningID
-        JOIN Billett AS b ON b.billettID = s.billettID
-        JOIN Togruteforekomst AS tf  ON b.forekomstID = tf.forekomstID
-        JOIN Togrute AS t ON tf.ruteID = t.ruteID
+    # Må først finne ut hvilken forekomstID som skal brukes
+    ruteID = int(input(f"Skriv inn hvilken rute du ønsker å ta: "))
 
-
-    """)
 
     c.execute("""
-        SELECT s.setenummer, s.radnummer, s.vognID, sb.billettID FROM Sete AS s
+        SELECT s.setenummer, s.radnummer, s.vognID, sb.billettID, d.delstrekningID, b.forekomstID, tf.ruteID, tf.dato FROM Sete AS s
         LEFT JOIN Sittebillett AS sb ON (sb.vognID = s.vognID AND sb.radnummer = s.radnummer AND sb.setenummer = s.setenummer)
+        LEFT JOIN Delstrekning AS d ON d.delstrekningID = sb.delstrekningID
+        LEFT JOIN Billett AS b ON b.billettID = sb.billettID
+        LEFT JOIN Togruteforekomst AS tf ON tf.forekomstID = b.forekomstID
+        WHERE (tf.dato LIKE :dato AND tf.ruteID = :ruteID)
+        ORDER BY sb.billettID ASC
+    """, {"dato": dato, "ruteID": ruteID})
+
+    res = c.fetchall()
+    print(res)
+
+    c.execute("""
+        SELECT s.setenummer, s.radnummer, s.vognID, sb.billettID, d.delstrekningID, b.forekomstID FROM Sete AS s
+        LEFT JOIN Sittebillett AS sb ON (sb.vognID = s.vognID AND sb.radnummer = s.radnummer AND sb.setenummer = s.setenummer)
+        LEFT JOIN Delstrekning AS d ON d.delstrekningID = sb.delstrekningID
+        LEFT JOIN Billett AS b ON b.billettID = sb.billettID
         ORDER BY sb.billettID ASC
     """)
 
@@ -298,5 +307,5 @@ def BH_g():
 def BH_h():
     pass
 
-BH_d()
+BH_g()
 # main()
