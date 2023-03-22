@@ -49,11 +49,11 @@ def BH_c():
 
     # Må sjekke hvilke ruter som er innom stasjonen på ukedagen + neste dag da en rute
     # kan starte på en ukedag og ende på neste ukedag (nattog)
-    if ukedag == len(ukedager):
-        sjekkUkedag = [ukedag, ukedag[0]]
+    if dagNummer == len(ukedager):
+        sjekkUkedag = [ukedag, ukedager[0]]
     else:
-        sjekkUkedag = [ukedag, ukedag[dagNummer+1] ]
-
+        sjekkUkedag = [ukedag, ukedager[dagNummer+1] ]
+    
     c.execute("""
     SELECT dag.ukedag, t.ruteID FROM StarterPaaDag as dag
     JOIN Togrute as t ON dag.ruteID = t.ruteID
@@ -66,8 +66,8 @@ def BH_c():
         if (el[1] not in aktuelleRuter):
             aktuelleRuter.append(el[1])
     stasjonerMedDagTidListe = []
-    # Henter alle stasjoner på en rute
 
+    # Henter alle stasjoner på en rute
     for rute in aktuelleRuter:
         stasjonerIRekkefølge = listeMedStasjoner(rute)
         stasjonerMedDagTid = []
@@ -92,6 +92,7 @@ def BH_c():
                 """, {"rute": rute, "stasjon": stasjon, "ukedag1": sjekkUkedag[0], "ukedag2": sjekkUkedag[1]})
                 resultat = c.fetchall()[0]
                 ankomsttid = int(resultat[1])
+
                 # Sjekker om ankomsttid er før avgangstid fra forrige stasjon (ny dag)
                 if (ankomsttid - int(stasjonerMedDagTid[-1][2])) < 0:
                     if ukedager.index(resultat[3]) == 6:
@@ -110,7 +111,7 @@ def BH_c():
     for stasjonerMedDagTid in stasjonerMedDagTidListe:
         for stasjon in stasjonerMedDagTid:
             # Printer ruten hvis dag og stasjonnavn stemmer
-            if (stasjon[0] == stasjonNavn and stasjon[3] == ukedag):
+            if (stasjon[0] == stasjonNavn and (stasjon[3] == sjekkUkedag[0] or stasjon[3] == sjekkUkedag[1])):
                 print(f"Rute {stasjon[4]}")
 
 
@@ -131,7 +132,7 @@ def listeMedStasjoner(ruteID):
         if stasjon[3] not in stasjoner:
             stasjoner.append(stasjon[3])
 
-    # Sorterer stasjonene i riktig rekkefølge
+    # Sorterer stasjonene i riktig rekkefølges
     delstrekninger = {} #delstrekningID : [stasjon-stasjon]
     for i in range(len(resultat)):
         if (resultat[i][1] in delstrekninger):
@@ -209,103 +210,36 @@ def BH_d():
     ruter = c.fetchall()
 
     # Henter ut alle stasjoner i rutene
-    ruteListe = []
+    # ruteListe = []
     for rute in ruter:
         ruteListe.append(rute[1])
 
-    # ruteListe = list(dict.fromkeys(ruteListe)) # Fjerner duplikater
 
-    # stasjonerIRekkefølgeListe = {} # Dictionary med {ruteID : [stasjon-stasjon-stasjon]}
-    for rute in ruteListe:
-        if (startStasjon in listeMedStasjoner(rute) and sluttStasjon in listeMedStasjoner(rute)):
-            # stasjonerIRekkefølgeListe[rute] = listeMedStasjoner(rute)
-            # print(listeMedStasjoner(rute))
+    forekomster = {} #dato : [{ruteID:[avgang, ankomst]}, {ruteID:[avgang, ankomst]}]
 
-            c.execute("""
-                SELECT t.ruteID, s.stasjonsnavn, i.ankomsttid, i.avgangstid FROM Togrute as t
-                JOIN InngaarITogrute AS i ON i.ruteID = t.ruteID
-                JOIN Stasjon AS s ON s.stasjonID = i.stasjonID
-                WHERE t.ruteID = :ruteID AND (s.stasjonsnavn = :startStasjon OR s.stasjonsnavn = :sluttStasjon)
-            """, {"ruteID" : rute, "startStasjon": startStasjon, "sluttStasjon": sluttStasjon } )
-            print()
-            print(c.fetchall())
-    
-    # print(stasjonerIRekkefølgeListe)
+    c.execute("""
+        SELECT t.ruteID, s.stasjonsnavn, i.ankomsttid, i.avgangstid, tf.dato FROM Togrute as t
+        JOIN InngaarITogrute AS i ON i.ruteID = t.ruteID
+        JOIN Stasjon AS s ON s.stasjonID = i.stasjonID
+        JOIN Togruteforekomst AS tf on tf.ruteID = t.ruteID
+        WHERE (s.stasjonsnavn = :startStasjon OR s.stasjonsnavn = :sluttStasjon)
+        ORDER BY tf.dato, t.ruteID ASC
+    """, {"ruteID" : rute, "startStasjon": startStasjon, "sluttStasjon": sluttStasjon } )
 
-
-
-    
-
-
-
-
-
-
-
-
-    # c.execute("SELECT * FROM stasjon")
-    # muligeStartStasjoner = c.fetchall()
-    # print("___________\nMulige startstasjoner:\n\n")
-    # print("ID | StasjonNavn")
-    # for stasjon in muligeStartStasjoner:
-    #     print(str(stasjon[0]) + " | " + stasjon[2])
-
-    # startStasjon = int(input("Hvor starter turen? (Velg en ID):\n"))
-
-    # print("____________\nStasjoner du kan komme deg til" )
-
-    # # Finner mulige sluttstasjoner fra startstasjon
-    # muligeEndeStasjoner = []
-    # erNesteStasjon = True
-    # stasjonOgTeste = startStasjon
-    # while erNesteStasjon:
-    #     c.execute("SELECT * FROM Stasjon WHERE (Stasjon.stasjonID = (SELECT stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :stasjonId and S.stasjonID = B.stasjonID and B.stasjonsType = 'start')) and B.stasjonsType = 'ende')))", {"stasjonId": stasjonOgTeste})
-    #     muligNesteStasjon = c.fetchall()
-    #     if muligNesteStasjon == []:
-    #         erNesteStasjon = False
-    #     for stasjon in muligNesteStasjon:
-    #         muligeEndeStasjoner.append(stasjon)
-    #         stasjonOgTeste = stasjon[0]
-
-    # print("ID | StasjonNavn")
-    # for stasjon in muligeEndeStasjoner:
-    #     print(str(stasjon[0]) + " | " + stasjon[2])
-    # sluttStasjon = str(input("Hvor slutter turen? (Velg en ID):\n"))
-
-
-    # dato = datetime.datetime.strptime(input("Når ønsker du å reise? (YYYY-MM-DD HH:MM):\n"), "%Y-%m-%d %H:%M")
-
-    # #Finner først alle ruter som går mellom de to stasjonene.
-    # kompatibleRuter = []
-    # try:
-    #     c.execute("SELECT ruteID FROM InngaarITogrute WHERE stasjonID = :stasjonId", {"stasjonId": str(startStasjon)})
-    #     ruterPåStart = c.fetchall()
-    #     c.execute("SELECT ruteID FROM InngaarITogrute WHERE stasjonID = :stasjonId", {"stasjonId": str(sluttStasjon)})
-    #     ruterPåSlutt = c.fetchall()
-    #     for rute in ruterPåStart:
-    #         if rute in ruterPåSlutt:
-    #             kompatibleRuter.append(rute[0])
-    # except:
-    #     raise Exception("Faen i hælvete")
-
-    # # Finner så ruter som er innenfor en dag på den valgte datoen og tiden.
-    # ruter = []
-    # try:
-    #     for rute in kompatibleRuter:
-    #         c.execute("SELECT * FROM Togruteforekomst WHERE ruteID = :ruteID", {"ruteID": rute})
-    #         forekomster = c.fetchall()
-    #         for forekomst in forekomster:
-    #             if datetime.datetime.strptime(forekomst[2], "%Y-%m-%d %H:%M:%S") > dato and datetime.datetime.strptime(forekomst[2], "%Y-%m-%d %H:%M:%S") < (dato + datetime.timedelta(days = 1)):
-    #                 ruter.append(forekomst)
-    # except:
-    #     raise Exception("Kuk i ræv")
-
-    # print("Du kan ta følgende ruter:")
-    # print("RUTE | Avgangstid")
-    # for rute in ruter:
-    #     print(str(rute[1]) + " | " + rute[2])
-
-
+    res = c.fetchall()
+    forekomster = []
+    for i in range(len(res)):
+        # [dato, ruteID, ankomsttid, avgangstid]
+        info = [res[i][4], res[i][0],"", ""]
+        if i%2 == 0 and (res[i][3] != None and res[i+1][2] != None):
+            info[2] = res[i][3]
+            info[3] = res[i+1][2]
+            forekomster.append(info)
+    print(f"Fra {startStasjon} til {sluttStasjon} går disse togene: ")
+    print(f"Dato      |RuteID| Avgang | Ankomst ")
+    print("-----------------------------------")
+    for el in forekomster:
+        print(f"{el[0][:10]}|  {el[1]}   |  {el[2]}  | {el[3]}")
 
 def BH_e():
     navn = input("Skriv inn navnet ditt: ")
@@ -336,6 +270,9 @@ def BH_e():
     con.commit()
     print(f"Kunde registrert: {navn}, {tlf}, {epost}")
 
+# Det skal legges inn nødvendige data slik at systemet kan håndtere billettkjøp for de tre togrutene
+# på Nordlandsbanen, mandag 3. april og tirsdag 4. april i år. Dette kan gjøres med et skript, dere
+# trenger ikke å programmere støtte for denne funksjonaliteten.
 def BH_f():
     pass
 
@@ -343,7 +280,7 @@ def BH_f():
 # og kjøpe de billettene hen ønsker. Denne funksjonaliteten skal programmeres.
 # Pass på at dere bare selger ledige plasser
 def BH_g():
-
+    
 
     pass
 
