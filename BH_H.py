@@ -61,10 +61,12 @@ def BH_h():
             startStasjon = sammeTur[-1][num]
             sluttStasjon = sammeTur[0][num]
 
+        string = f"Du har en reise den {res[i][1]} fra {startStasjon} til {sluttStasjon} med rute {sammeTur[0][0]}.\n"
+
         if (sittebillett) :
-            string = f"Du har en reise den {res[i][1]} fra {startStasjon} til {sluttStasjon}.\nDu har en sovebillett i vogn {res[i][10]} i kupé {res[i][11]} med {res[i][12]} senger.\n"
+            string += f"Du har en sovebillett i vogn {res[i][10]} i kupé {res[i][11]} med {res[i][12]} senger."
         else:
-            string = f"Du har en reise den {res[i][1]} fra {startStasjon} til {sluttStasjon}.\nDu har en sittebillett på sete {res[i][7]}, rad {res[i][6]}, vogn {res[i][5]}.\n"
+            string += f"Du har en sittebillett på sete {res[i][7]}, rad {res[i][6]}, vogn {res[i][5]}.\n"
 
         if res[i][1] not in ruterMedDato and res[i][1][:10] >= dagensDato:
             ruterMedDato[res[i][1]] = string
