@@ -17,8 +17,6 @@ INSERT INTO Ordre (dato, kundenummer)
   VALUES ("2023-01-01", 2);
 
 -- Legger inn sittebilletter til Leander sin reise fra Trondheim S til Mosjoeen
--- Det er en billett per delstrekning
--- Billett for reisende 1 av 2
 INSERT INTO Billett (billettID, forekomstID, ordrenummer)
   VALUES (1, 1, 1);
 INSERT INTO Sittebillett (billettID, delstrekningID, vognID, radnummer, setenummer)
@@ -31,22 +29,6 @@ INSERT INTO Sittebillett (billettID, delstrekningID, vognID, radnummer, setenumm
 
 INSERT INTO Billett (billettID, forekomstID, ordrenummer)
   VALUES (3, 1, 1);
-INSERT INTO Sittebillett (billettID, delstrekningID, vognID, radnummer, setenummer)
-  VALUES (3, 3, 1, 1, 1);
-
--- Billett for reisende 2 av 2
-INSERT INTO Billett (billettID, forekomstID, ordrenummer)
-  VALUES (4, 1, 1);
-INSERT INTO Sittebillett (billettID, delstrekningID, vognID, radnummer, setenummer)
-  VALUES (4, 1, 1, 1, 2);
-
-INSERT INTO Billett (billettID, forekomstID, ordrenummer)
-  VALUES (5, 1, 1);
-INSERT INTO Sittebillett (billettID, delstrekningID, vognID, radnummer, setenummer)
-  VALUES (5, 2, 1, 1, 2);
-
-INSERT INTO Billett (billettID, forekomstID, ordrenummer)
-  VALUES (6, 1, 1);
 INSERT INTO Sittebillett (billettID, delstrekningID, vognID, radnummer, setenummer)
   VALUES (3, 3, 1, 1, 1);
 

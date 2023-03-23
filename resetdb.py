@@ -74,7 +74,7 @@ for command in sqlCommands:
         print("Command skipped: ", msg)
 
 # Insert data from H
-fd = open('brukerhistoreH.sql', 'r')
+fd = open('brukerhistorieH.sql', 'r')
 sqlFile = fd.read()
 fd.close()
 
