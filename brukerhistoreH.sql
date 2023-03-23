@@ -12,6 +12,8 @@ INSERT INTO Ordre (dato, kundenummer)
 INSERT INTO Ordre (dato, kundenummer) 
   VALUES ("2023-03-06", 1);
 INSERT INTO Ordre (dato, kundenummer) 
+  VALUES ("2023-03-07", 1);
+INSERT INTO Ordre (dato, kundenummer) 
   VALUES ("2023-01-01", 2);
 
 -- Legger inn sittebilletter til Leander sin reise fra Trondheim S til Mosjoeen
