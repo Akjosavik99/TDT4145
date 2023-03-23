@@ -1,5 +1,6 @@
 import sqlite3 as sql
 from datetime import datetime, timedelta
+import math
 
 con = sql.connect('tog.db')
 c = con.cursor()
@@ -340,16 +341,60 @@ def BH_g():
     # Spør bruker hva slags billett-type den ønsker
     print(f"På rute nr: {ruteID} er disse billettypene tilgjenglige {tilgjengeligeTyper}")
 
-    ønsketType = input("Skriv inn hvilken bilett du ønsker: (sitte/sove)")
+    onsketType = input("Skriv inn hvilken bilett du ønsker: (sitte/sove)")
 
-    # Sjekker så om det er ledig plass for tilgjengelige billetttyper
+    # Finner en kupe og seng som er tilgjengelig
+    if onsketType == "sove":
+        c.execute("SELECT kupenummer FROM Togruteforekomst as T INNER JOIN HarVogner as H ON (T.forekomstID = :forekomstId and H.ruteID = T.ruteID) INNER JOIN Vogn as V ON (V.vognID = H.vognID and V.vognType = 'sove') INNER JOIN Kupe as K ON (H.vognID = K.vognID)", {"forekomstId": forekomstID})
+        antallKupeerIForekomst = c.fetchall()
+        c.execute("SELECT DISTINCT kupenummer FROM Billett as B INNER JOIN Sovebillett as S ON (B.forekomstID = :forekomstId)", {"forekomstId": forekomstID})
+        opptatteKupeer = c.fetchall()
+        if len(antallKupeerIForekomst) - len(opptatteKupeer) == 0:
+            print("Toget er fullt prøv en annen avgang")
+            exit(0)
+        print(len(antallKupeerIForekomst))
+        print(len(opptatteKupeer))
+        kundeOnskerAntallSenger = int(input(f"Det er {(len(antallKupeerIForekomst) - len(opptatteKupeer)) * 2} ledige soveplasser på toget. Hvor mange senger ønsker du?: "))
+        # NB!NB! Må sjekke at man ikke velger fler enn mulige ellers blir alt feil
+        antallKupeer = math.ceil(kundeOnskerAntallSenger / 2)
 
-    antallLedigeKupeer = 0
+        # Litt databehandling for å få kupeinformasjonen inn i sett slik at vi kan ta differansen
 
-    c.execute("SELECT COUNT(ordrenummer) as antallOpptatteKupeer FROM Billett AS B INNER JOIN Sovebillett AS S ON (S.billettID = B.billettID) WHERE (B.forekomstID = :forekomstId)", {"forekomstId": forekomstID})
-    antallOpptatteKupeer = c.fetchone()[0]
+        kupeIForekomst = set()
+        for kupe in antallKupeerIForekomst:
+            kupeIForekomst.add(kupe[0])
 
-    # Sjekker så om det er ledig sitteplass på avgangen
+        opptatte = set()
+        for kupe in opptatteKupeer:
+            opptatte.add(kupe[0])
+
+        ledigeKupeer = kupeIForekomst.difference(opptatte)
+
+        for i in range(0, antallKupeer):
+            tidspunktForOrdre = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+            c.execute("INSERT INTO Ordre (dato, kundenummer) VALUES (:tidspunkt, :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": 1})
+            con.commit()
+            c.execute("SELECT ordrenummer FROM Ordre WHERE (dato = :tidspunkt and kundenummer = :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": 1})
+            ordrenummer = c.fetchone()[0]
+            c.execute("INSERT INTO Billett (forekomstID, ordrenummer) VALUES (:forekomstId, :ordrenummer)", {"forekomstId": forekomstID, "ordrenummer": ordrenummer[0]})
+
+            c.execute("INSERT INTO Sovebillett ()")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

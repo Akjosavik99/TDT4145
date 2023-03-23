@@ -55,3 +55,6 @@ INSERT INTO
         "vognID"
     )
 VALUES (5, 2, 2, 3);
+
+INSERT INTO Kunde (navn, epost, tlf)
+  VALUES ("Leander", "leander@epost.com", "11111111");
