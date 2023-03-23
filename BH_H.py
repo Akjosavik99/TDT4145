@@ -7,7 +7,11 @@ c = con.cursor()
 # For en bruker skal man kunne finne all informasjon om de kjøpene hen har gjort for fremtidige
 # reiser. Denne funksjonaliteten skal programmeres.
 def BH_h():
+    # Henter dagens dato så sensor kan sette den selv
+    dagensDato = input("Skriv inn dagens dato på følgende format (YYYY-MM-DD): ")
     tlf =  int(input("Skriv inn telefonnummeret ditt: "))
+
+    print()
 
     c.execute("""
     SELECT 
@@ -62,7 +66,7 @@ def BH_h():
         else:
             string = f"Du har en reise den {res[i][1]} fra {startStasjon} til {sluttStasjon}.\nDu har en sittebillett på sete {res[i][7]}, rad {res[i][6]}, vogn {res[i][5]}.\n"
 
-        if res[i][1] not in ruterMedDato:
+        if res[i][1] not in ruterMedDato and res[i][1][:10] >= dagensDato:
             ruterMedDato[res[i][1]] = string
 
     # Printer reisene
