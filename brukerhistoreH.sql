@@ -1,5 +1,3 @@
---Sletter alle records i relevante tabller TODO
-
 -- Legger inn kunder
 INSERT INTO Kunde (navn, epost, tlf) 
   VALUES ("Leander", "leander@epost.com", "11111111");
@@ -57,3 +55,9 @@ INSERT INTO Billett (forekomstID, ordrenummer)
   VALUES (5, 3);
 INSERT INTO Sittebillett (billettID, delstrekningID, vognID, radnummer, setenummer)
   VALUES (9, 1, 1, 1, 3);
+
+  -- Legger inn sittebilletter til Andreas sin reise fra Trondheim S til Steinkjer
+INSERT INTO Billett (forekomstID, ordrenummer)
+  VALUES (4, 4);
+INSERT INTO Sovebillett (billettID, delstrekningID, antallSenger, kupenummer, vognID)
+  VALUES (10, 1, 2, 1, 3);
