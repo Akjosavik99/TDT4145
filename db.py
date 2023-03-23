@@ -5,24 +5,25 @@ con = sql.connect('tog.db')
 c = con.cursor()
 
 def main():
-    brukerhistorie = input(f"Skriv en bokstav mellom c og h for å velge brukerhistorie, trykk enter for å avslutte programmet: ").lower()
-    if brukerhistorie == "":
-        print("Programmet er ferdig")
-    elif brukerhistorie == "c":
-        BH_c()
-    elif brukerhistorie == "d":
-        BH_d()
-    elif brukerhistorie == "e":
-        BH_e()
-    elif brukerhistorie == "f":
-        BH_f()
-    elif brukerhistorie == "g":
-        BH_g()
-    elif brukerhistorie == "h":
-        BH_h()
-    else:
-        print("Ugyldig input, prøv igjen")
-        main()
+    while True:
+        brukerhistorie = input(f"Skriv en bokstav mellom c og h for å velge brukerhistorie, trykk enter for å avslutte programmet: ").lower()
+        if brukerhistorie == "":
+            print("Programmet er ferdig")
+            break
+        elif brukerhistorie == "c":
+            BH_c()
+        elif brukerhistorie == "d":
+            BH_d(None, None, None, None)
+        elif brukerhistorie == "e":
+            BH_e()
+        elif brukerhistorie == "f":
+            BH_f()
+        elif brukerhistorie == "g":
+            BH_g()
+        elif brukerhistorie == "h":
+            BH_h()
+        else:
+            print("Ugyldig input, prøv igjen")
 
 # For en stasjon som oppgis, skal bruker få ut alle togruter som er innom stasjonen en gitt ukedag.
 # Denne funksjonaliteten skal programmeres.
@@ -174,14 +175,11 @@ def settRekkefølge(startStasjon, delstrekninger, rekkefølgeListe):
         settRekkefølge(startStasjon, delstrekninger, rekkefølgeListe)
     return rekkefølgeListe
 
+def BH_d(startStasjon, sluttStasjon, dato1, dato2):
 
-#Bruker skal kunne søke etter togruter som går mellom en startstasjon og en sluttstasjon, med
-#utgangspunkt i en dato og et klokkeslett. Alle ruter den samme dagen og den neste skal
-#returneres, sortert på tid. Denne funksjonaliteten skal programmeres.
-
-def BH_d():
-    # Henter startstasjon, sluttstasjon og dato
-    startStasjon, sluttStasjon, dato1, dato2 = hentStasjonDato()
+    if startStasjon == None and sluttStasjon == None and dato1 == None and dato2 == None:
+        # Henter startstasjon, sluttstasjon og dato
+        startStasjon, sluttStasjon, dato1, dato2 = hentStasjonDato()
 
     # Finner alle togruter som går gjennom startstasjonen.
 
@@ -231,7 +229,7 @@ def BH_d():
     #Printer resultatene
     if (len(muligeRuter) > 0):
         print(f"Fra {startStasjon} til {sluttStasjon} går disse togene: ")
-        print(f"   Dato   |RuteID| Avgang | Ankomst ")
+        print(f" ID |   Dato   | Rute | Avgang | Ankomst ")
         print("-----------------------------------")
         muligeAvganger = []
         for rute in muligeRuter:
@@ -247,10 +245,10 @@ def BH_d():
                 c.execute("SELECT ankomsttid FROM InngaarITogrute WHERE (ruteID = :ruteId AND stasjonID = :avgangStasjonID)", {"ruteId": rute[0], "avgangStasjonID": sluttStasjon})
                 ankomsttid = c.fetchone()[0]
             for avgang in res:
-                muligeAvganger.append([avgang[2], rute[0], avgangstid, ankomsttid])
+                muligeAvganger.append([avgang[2], rute[0], avgangstid, ankomsttid, avgang[0]])
         muligeAvganger.sort()
         for el in muligeAvganger:
-            print(f"{el[0][:10]}|  {el[1]}   |  {el[2]}  | {el[3]}")
+            print(f"{el[4]}   |{el[0][:10]}|  {el[1]}   |  {el[2]}  | {el[3]}")
 
     else:
         print("Ingen ruter funnet")
@@ -282,9 +280,9 @@ def BH_e():
     unikTlf = False
     while not unikTlf :
         tlf = input("Skriv inn telefonnummeret ditt: ")
-        antall = c.execute("SELECT COUNT(tlf) FROM Kunde WHERE tlf = :tlf", {"tlf": tlf} )
-        con.commit()
-        if (antall == 0):
+        c.execute("SELECT COUNT(tlf) FROM Kunde WHERE tlf = :tlf", {"tlf": tlf} )
+        antall = c.fetchall()
+        if (antall[0][0] == 0):
             unikTlf = True
         else:
             print("Telefonnummeret er allerede registrert. Prøv igjen.")
@@ -293,9 +291,9 @@ def BH_e():
     unikEpost = False
     while not unikEpost:
         epost = input("Skriv inn eposten din: ")
-        antall = c.execute("SELECT COUNT(epost) FROM Kunde WHERE epost = :epost", {"epost": epost} )
-        con.commit()
-        if (antall == 0):
+        c.execute("SELECT COUNT(epost) FROM Kunde WHERE epost = :epost", {"epost": epost} )
+        antall = c.fetchall()
+        if (antall[0][0] == 0):
             unikEpost = True
         else:
             print("Eposten er allerede registrert. Prøv igjen.")
@@ -320,26 +318,43 @@ def BH_g():
     # Henter startstasjon, sluttstasjon og dato
     startStasjon, sluttStasjon, dato, dato2 = hentStasjonDato()
 
+    BH_d(startStasjon, sluttStasjon, dato, dato2)
+
     # Må først finne ut hvilken forekomstID som skal brukes
-    ruteID = int(input(f"Skriv inn hvilken rute du ønsker å ta: "))
+    forekomstID = int(input(f"Skriv inn hvilken ID du ønsker å ta: "))
 
-    c.execute("""
-        SELECT s.setenummer, s.radnummer, s.vognID, sb.billettID, d.delstrekningID, b.forekomstID, tf.ruteID, tf.dato FROM Sete AS s
-        LEFT JOIN Sittebillett AS sb ON (sb.vognID = s.vognID AND sb.radnummer = s.radnummer AND sb.setenummer = s.setenummer)
-        LEFT JOIN Delstrekning AS d ON d.delstrekningID = sb.delstrekningID
-        LEFT JOIN Billett AS b ON b.billettID = sb.billettID
-        LEFT JOIN Togruteforekomst AS tf ON tf.forekomstID = b.forekomstID
-        WHERE (tf.dato LIKE :dato AND tf.ruteID = :ruteID)
-        ORDER BY sb.billettID ASC
-    """, {"dato": dato, "ruteID": ruteID})
+    # Sjekker først hva slags vogner som er tilgjengelig på avgangen
 
-    res = c.fetchall()
-    print(res)
+    tilgjengeligeTyper = set()
 
-    pass
+    c.execute("SELECT ruteID FROM Togruteforekomst WHERE(Togruteforekomst.forekomstID=:forekomstId)", {"forekomstId": forekomstID})
+    ruteID = c.fetchone()[0]
+    c.execute("SELECT vognID FROM HarVogner WHERE(ruteID=:ruteId)", {"ruteId": ruteID})
+    vogntyper = c.fetchall()
+
+    for vogn in vogntyper:
+        c.execute("SELECT vognType FROM Vogn WHERE (vognID = :vognId)", {"vognId": vogn[0]})
+        type = c.fetchone()[0]
+        tilgjengeligeTyper.add(type)
+
+    # Spør bruker hva slags billett-type den ønsker
+    print(f"På rute nr: {ruteID} er disse billettypene tilgjenglige {tilgjengeligeTyper}")
+
+    ønsketType = input("Skriv inn hvilken bilett du ønsker: (sitte/sove)")
+
+    # Sjekker så om det er ledig plass for tilgjengelige billetttyper
+
+    antallLedigeKupeer = 0
+
+    c.execute("SELECT COUNT(ordrenummer) as antallOpptatteKupeer FROM Billett AS B INNER JOIN Sovebillett AS S ON (S.billettID = B.billettID) WHERE (B.forekomstID = :forekomstId)", {"forekomstId": forekomstID})
+    antallOpptatteKupeer = c.fetchone()[0]
+
+    # Sjekker så om det er ledig sitteplass på avgangen
+
+
 
 def BH_h():
     pass
 
-BH_d()
-# main()
+
+main()
