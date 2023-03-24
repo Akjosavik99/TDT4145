@@ -413,8 +413,8 @@ def BH_g():
         # Har nå alle delstrekningene som reisen består av, kan da se om det finnes sete tilgjengelig på hele reisen.
 
         # Henter først ut alle seter som er tilgjengelige for hver delstrekning.
-        tilgjengeligePlasser = {}
-        opptattePlasser = {}
+        tilgjengeligePlasser = dict()
+        opptattePlasser = dict()
 
         for delstrekningID in delstrekningIDer:
             c.execute("""SELECT Sete.setenummer, Sete.radnummer, Sete.vognID
@@ -441,11 +441,45 @@ def BH_g():
                 """, {"forekomstID": forekomstID, "delstrekningID": delstrekningID})
             res = c.fetchall()
 
+            if res == []:
+                opptattePlasser[delstrekningID] = []
+                continue
+
             for setenummer, radnummer, vognID in res:
                 if (delstrekningID not in opptattePlasser):
                     opptattePlasser[delstrekningID] = [[setenummer, radnummer, vognID]]
                 else:
                     opptattePlasser[delstrekningID].append([setenummer, radnummer, vognID])
+
+        # Gjør om listene i dict til set slik at vi kan ta differansen og finne ledige plasser
+
+        ledigePlasser = dict()
+
+        for delstrekning in delstrekningIDer:
+            ledige = []
+            for plass in tilgjengeligePlasser[delstrekning]:
+                if plass not in opptattePlasser[delstrekning]:
+                    ledige.append(plass)
+            ledigePlasser[delstrekning] = ledige
+
+        ledigPlass = []
+        for plass in ledigePlasser[delstrekningIDer[0]]:
+            ledigPåAlleDestrekninger = True
+            for id in delstrekningIDer:
+                if id == delstrekningIDer[0]:
+                    continue
+                else:
+                    if plass in ledigePlasser[id]:
+                        continue
+                    else:
+                        ledigPåAlleDestrekninger = False
+                        break
+            if ledigPåAlleDestrekninger:
+                ledigPlass = plass
+                break
+
+        print(f"{ledigPlass} er tilgjengelig")
+
 
 
 def BH_h():

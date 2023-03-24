@@ -73,7 +73,7 @@ for command in sqlCommands:
     except sqlite3.OperationalError as msg:
         print("Command skipped: ", msg)
 
-fd = open('brukerhistorieE.sql', 'r')
+fd = open('brukerhistoreH.sql', 'r')
 sqlFile = fd.read()
 fd.close()
 
