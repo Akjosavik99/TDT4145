@@ -389,6 +389,34 @@ def BH_g():
             c.execute("INSERT INTO Sovebillett (billettID, antallSenger, kupenummer, vognID) VALUES (:billettID, :antallSenger, :kupenummer, :vognID)", {"billettID": billettID[0], "antallSenger": 1 if sengerIgjen == 1 else 2, "kupenummer": ledigeKupeer[i], "vognID": vognID})
             sengerIgjen = sengerIgjen - 1 if sengerIgjen == 1 else 2
             con.commit()
+    if onsketType == "sitte":
+        # Må først finne alle delstrekningene som reisen består av
+        # Finner ut av hva som er hovedretningen til ruten
+        c.execute("SELECT hovedretning FROM Togrute WHERE (ruteID = :ruteId)", {"ruteId": ruteID})
+        hovedretning = c.fetchone()[0]
+        delstrekningIDer = []
+        nesteStasjon = int(startStasjon)
+        while True:
+            if hovedretning == 1:
+                c.execute("SELECT delstrekningID, stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :nesteStasjon and S.stasjonID = B.stasjonID and B.stasjonsType = 'start')) and B.stasjonsType = 'ende')", {"nesteStasjon": nesteStasjon})
+            else:
+                c.execute("SELECT delstrekningID, stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :nesteStasjon and S.stasjonID = B.stasjonID and B.stasjonsType = 'ende')) and B.stasjonsType = 'start')", {"nesteStasjon": nesteStasjon})
+            neste = list(c.fetchone())
+            if neste[1] == sluttStasjon:
+                delstrekningIDer.append(neste[0])
+                break
+            else:
+                delstrekningIDer.append(neste[0])
+                nesteStasjon  = neste[1]
+
+        # Har nå alle delstrekningene som reisen består av, kan da se om det finnes sete tilgjengelig på hele reisen.
+
+        # Henter først ut alle seter som er tilgjengelige for hver delstrekning.
+
+
+
+
+
 
 
 
