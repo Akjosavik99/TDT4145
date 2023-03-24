@@ -322,9 +322,11 @@ def BH_g():
 
     BH_d(startStasjon, sluttStasjon, dato, dato2)
 
+
     # Må først finne ut hvilken forekomstID som skal brukes
     forekomstID = int(input(f"Skriv inn hvilken ID du ønsker å ta: "))
 
+    kundenummer = int(input("Skriv inn kundenummer: "))
     # Sjekker først hva slags vogner som er tilgjengelig på avgangen
 
     tilgjengeligeTyper = set()
@@ -343,7 +345,7 @@ def BH_g():
     print(f"På rute nr: {ruteID} er disse billettypene tilgjenglige {tilgjengeligeTyper}")
 
     onsketType = input("Skriv inn hvilken bilett du ønsker: (sitte/sove)")
-
+    tidspunktForOrdre = datetime.now().strftime("%Y-%m-%d %H:%M")   
     # Finner en kupe og seng som er tilgjengelig
     if onsketType == "sove":
         c.execute("SELECT kupenummer FROM Togruteforekomst as T INNER JOIN HarVogner as H ON (T.forekomstID = :forekomstId and H.ruteID = T.ruteID) INNER JOIN Vogn as V ON (V.vognID = H.vognID and V.vognType = 'sove') INNER JOIN Kupe as K ON (H.vognID = K.vognID)", {"forekomstId": forekomstID})
@@ -374,11 +376,11 @@ def BH_g():
         sengerIgjen = kundeOnskerAntallSenger
 
         for i in range(0, antallKupeer):
-            tidspunktForOrdre = datetime.now().strftime("%Y-%m-%d %H:%M")
+            
 
             c.execute("INSERT INTO Ordre (dato, kundenummer) VALUES (:tidspunkt, :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": 1})
             con.commit()
-            c.execute("SELECT ordrenummer FROM Ordre WHERE (dato = :tidspunkt and kundenummer = :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": 1})
+            c.execute("SELECT ordrenummer FROM Ordre WHERE (dato = :tidspunkt and kundenummer = :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": kundenummer})
             ordrenummer = c.fetchone()[0]
             c.execute("INSERT INTO Billett (forekomstID, ordrenummer) VALUES (:forekomstId, :Ordrenummer)", {"forekomstId": forekomstID, "Ordrenummer": ordrenummer})
             con.commit()
@@ -479,7 +481,29 @@ def BH_g():
                 break
 
         print(f"{ledigPlass} er tilgjengelig")
-        print("hei")
+
+        print(ledigPlass)
+
+        kjøp = input("Vil du kjøpe denne plassen? (y/n): ").lower()
+
+        if (kjøp == "y"):
+
+            c.execute("INSERT INTO Ordre (dato, kundenummer) VALUES (:tidspunkt, :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": kundenummer})
+            con.commit()
+            c.execute("SELECT ordrenummer FROM Ordre WHERE (dato = :tidspunkt and kundenummer = :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": kundenummer})
+            ordrenummer = c.fetchone()[0]
+
+            for delstrekningID in delstrekningIDer:
+                c.execute("INSERT INTO Billett (forekomstID, ordrenummer) VALUES (:forekomstId, :Ordrenummer)", {"forekomstId": forekomstID, "Ordrenummer": ordrenummer})
+                con.commit()
+                c.execute("""
+                SELECT b.billettID FROM Billett as B
+                JOIN Sittebillett as sb ON sb.billettID = b.billettID
+                WHERE (b.forekomstId = :forekomstId and b.ordrenummer = :ordrenummer and sb.delstrekningID = :delstrekningID)
+                """, {"forekomstId": forekomstID, "ordrenummer": ordrenummer, "delstrekningID": delstrekningID})
+                billettID = c.fetchone()
+                c.execute("INSERT INTO Sittebillett (setenummer, radnummer, vognID, delstrekningID, billettID) VALUES (:setenummer, :radnummer, :vognID, :delstrekningID, :billettID)", {"setenummer": ledigPlass[0], "radnummer": ledigPlass[1], "vognID": ledigPlass[2], "delstrekningID": delstrekningID, "billettID": billettID})
+                con.commit()
 
 
 
