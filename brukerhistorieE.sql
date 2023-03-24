@@ -43,18 +43,20 @@ INSERT INTO
         "billettID",
         "antallSenger",
         kupenummer,
-        "vognID"
+        "vognID",
+        "delstrekningID"
     )
-VALUES (3, 2, 1, 3);
+VALUES (3, 2, 1, 3, 1);
 
 INSERT INTO
     "Sovebillett" (
         "billettID",
         "antallSenger",
         kupenummer,
-        "vognID"
+        "vognID",
+        "delstrekningID"
     )
-VALUES (5, 2, 2, 3);
+VALUES (5, 2, 2, 3, 2);
 
 INSERT INTO Kunde (navn, epost, tlf)
   VALUES ("Leander", "leander@epost.com", "11111111");

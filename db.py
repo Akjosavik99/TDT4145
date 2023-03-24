@@ -373,6 +373,11 @@ def BH_g():
 
         sengerIgjen = kundeOnskerAntallSenger
 
+        delstrekningIDer = hentDelstrekningIDer(startStasjon, sluttStasjon)
+
+
+
+
         for i in range(0, antallKupeer):
             tidspunktForOrdre = datetime.now().strftime("%Y-%m-%d %H:%M")
 
@@ -380,16 +385,20 @@ def BH_g():
             con.commit()
             c.execute("SELECT ordrenummer FROM Ordre WHERE (dato = :tidspunkt and kundenummer = :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": 1})
             ordrenummer = c.fetchone()[0]
-            c.execute("INSERT INTO Billett (forekomstID, ordrenummer) VALUES (:forekomstId, :Ordrenummer)", {"forekomstId": forekomstID, "Ordrenummer": ordrenummer})
-            con.commit()
-            c.execute("SELECT billettID FROM Billett as B WHERE (b.forekomstId = :forekomstId and b.ordrenummer = :ordrenummer)", {"forekomstId": forekomstID, "ordrenummer": ordrenummer})
-            billettID = c.fetchone()
-            c.execute("SELECT DISTINCT H.vognID FROM Togruteforekomst as T INNER JOIN HarVogner as H ON (T.forekomstID = :forekomstId and H.ruteID = T.ruteID) INNER JOIN Vogn as V ON (V.vognID = H.vognID and V.vognType = 'sove') INNER JOIN Kupe as K ON (H.vognID = K.vognID)", {"forekomstId": forekomstID})
-            vognID = c.fetchone()[0]
+            for i in range(startStasjon, sluttStasjon):
 
-            c.execute("INSERT INTO Sovebillett (billettID, antallSenger, kupenummer, vognID) VALUES (:billettID, :antallSenger, :kupenummer, :vognID)", {"billettID": billettID[0], "antallSenger": 1 if sengerIgjen == 1 else 2, "kupenummer": ledigeKupeer[i], "vognID": vognID})
-            sengerIgjen = sengerIgjen - 1 if sengerIgjen == 1 else 2
-            con.commit()
+                c.execute("INSERT INTO Billett (forekomstID, ordrenummer) VALUES (:forekomstId, :Ordrenummer)", {"forekomstId": forekomstID, "Ordrenummer": ordrenummer})
+                con.commit()
+                c.execute("SELECT billettID FROM Billett as B WHERE (b.forekomstId = :forekomstId and b.ordrenummer = :ordrenummer)", {"forekomstId": forekomstID, "ordrenummer": ordrenummer})
+                billettID = c.fetchone()
+                c.execute("SELECT DISTINCT H.vognID FROM Togruteforekomst as T INNER JOIN HarVogner as H ON (T.forekomstID = :forekomstId and H.ruteID = T.ruteID) INNER JOIN Vogn as V ON (V.vognID = H.vognID and V.vognType = 'sove') INNER JOIN Kupe as K ON (H.vognID = K.vognID)", {"forekomstId": forekomstID})
+                vognID = c.fetchone()[0]
+
+                # c.execute("INSERT INTO Sovebillett (billettID, antallSenger, kupenummer, vognID, delstrekningID) VALUES (:billettID, :antallSenger, :kupenummer, :vognID, :delstrekningID)",{"billettID": billettID[0], "antallSenger": 1 if sengerIgjen == 1 else 2, "kupenummer": ledigeKupeer[i], "vognID": vognID, delstrekningID: })
+
+                sengerIgjen = sengerIgjen - 1 if sengerIgjen == 1 else 2
+
+                con.commit()
     if onsketType == "sitte":
         # Må først finne alle delstrekningene som reisen består av
         # Finner ut av hva som er hovedretningen til ruten
@@ -447,9 +456,40 @@ def BH_g():
                 else:
                     opptattePlasser[delstrekningID].append([setenummer, radnummer, vognID])
 
+def hentDelstrekningIDer(startStasjonID, sluttStasjonID): 
+    c.execute("""
+        SELECT s.stasjonID, d.delstrekningID, bs.stasjonsType FROM Stasjon AS S
+        JOIN BestarAvStasjon AS bs ON bs.stasjonID = s.stasjonID
+        JOIN Delstrekning AS d ON d.delstrekningID = bs.delstrekningID
+        WHERE s.stasjonID = :startStasjonID
+        """,
+    {"startStasjonID": startStasjonID}
+    )
+
+
+    res = c.fetchall()
+    print(res)
+
+    return []
+
+def nesteDelstrekning(delstrekningID, nesteStasjonID, stasjonsType):
+    #  c.execute("""
+    #     SELECT d.delstrekningID, bs.stasjonsType, s.stasjonID
+    #     FROM Delstrekning AS d
+    #     JOIN BestarAvStasjon AS bs ON bs.delstrekningID = d.delstrekningID
+    #     JOIN Stasjon AS s ON s.stasjonID = bs.stasjonID
+    #     WHERE d.delstrekningID = :delstrekningID AND s.stasjonsType = :stasjonsType AND s.stasjonID = :nesteStasjonID
+    #  """,
+    # {"delstrekningID": delstrekningID, "stasjonsType": stasjonsType}
+    #  )
+
+    return delstrekningID
+
+hentDelstrekningIDer(1, 3)
 
 def BH_h():
     pass
 
 
-main()
+# main()
+# BH_g()
