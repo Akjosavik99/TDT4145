@@ -2,6 +2,7 @@ import sqlite3 as sql
 from datetime import datetime, timedelta
 import math
 
+
 con = sql.connect('tog.db')
 c = con.cursor()
 
@@ -412,16 +413,40 @@ def BH_g():
         # Har nå alle delstrekningene som reisen består av, kan da se om det finnes sete tilgjengelig på hele reisen.
 
         # Henter først ut alle seter som er tilgjengelige for hver delstrekning.
+        tilgjengeligePlasser = {}
+        opptattePlasser = {}
 
-        c.execute("""SELECT Sete.setenummer, Sete.radnummer, Sete.vognID
+        for delstrekningID in delstrekningIDer:
+            c.execute("""SELECT Sete.setenummer, Sete.radnummer, Sete.vognID
             FROM Sete
             JOIN HarVogner ON HarVogner.vognID = Sete.vognID
             JOIN Togruteforekomst ON Togruteforekomst.ruteID = HarVogner.ruteID
             JOIN BestarAvDelstrekninger ON BestarAvDelstrekninger.ruteID = Togruteforekomst.ruteID
-            WHERE BestarAvDelstrekninger.delstrekningID = 1
-	        AND Togruteforekomst.forekomstID = 1
- 	        AND HarVogner.ruteID = Togruteforekomst.ruteID""")
-        muligePlasser = c.fetchall()
+            WHERE BestarAvDelstrekninger.delstrekningID = :delstrekningId
+	        AND Togruteforekomst.forekomstID = :forekomstId
+ 	        AND HarVogner.ruteID = Togruteforekomst.ruteID""", {"delstrekningId": delstrekningID, "forekomstId": forekomstID})
+            muligePlasser = c.fetchall()
+            for setenummer, radnummer, vognID in muligePlasser:
+                if (delstrekningID not in tilgjengeligePlasser):
+                    tilgjengeligePlasser[delstrekningID] = [[setenummer, radnummer, vognID]]
+                else:
+                    tilgjengeligePlasser[delstrekningID].append([setenummer, radnummer, vognID])
+
+            c.execute("""
+                SELECT sb.setenummer, sb.radnummer, sb.vognID FROM Sittebillett AS sb
+                JOIN Billett AS b ON b.billettID = sb.billettID
+                JOIN Togruteforekomst AS tf ON tf.forekomstID = b.forekomstID
+                JOIN Delstrekning AS d ON d.delstrekningID = sb.delstrekningID
+                WHERE tf.forekomstID = :forekomstID AND d.delstrekningID = :delstrekningID
+                """, {"forekomstID": forekomstID, "delstrekningID": delstrekningID})
+            res = c.fetchall()
+
+            for setenummer, radnummer, vognID in res:
+                if (delstrekningID not in opptattePlasser):
+                    opptattePlasser[delstrekningID] = [[setenummer, radnummer, vognID]]
+                else:
+                    opptattePlasser[delstrekningID].append([setenummer, radnummer, vognID])
+
 
 def BH_h():
     pass
