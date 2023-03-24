@@ -398,31 +398,31 @@ def BH_e():
     unikTlf = False
     while not unikTlf :
         tlf = input("Skriv inn telefonnummeret ditt: ")
-        antall = c.execute("""
-          SELECT COUNT(tlf) 
-          FROM Kunde 
-          WHERE tlf = :tlf
-        """, 
-        {"tlf": tlf})
-        con.commit()
-        if (antall == 0):
-            unikTlf = True
+        if (tlf.isnumeric() == False):
+            print("Telefonnummeret må bestå av tall. Prøv igjen.")
+            continue
         else:
-            print("Telefonnummeret er allerede registrert. Prøv igjen.")
+            c.execute("SELECT COUNT(tlf) FROM Kunde WHERE tlf = :tlf", {"tlf": tlf} )
+            antall = c.fetchall()
+            if (antall[0][0] == 0):
+                unikTlf = True
+            else:
+                print("Telefonnummeret er allerede registrert. Prøv igjen.")
+        
 
     # Sjekker om eposten er unik
     unikEpost = False
     while not unikEpost:
         epost = input("Skriv inn eposten din: ")
-        antall = c.execute("""
+        c.execute("""
             SELECT COUNT(epost)
             FROM Kunde
             WHERE epost = :epost
             """,
             {"epost": epost}
         )
-        con.commit()
-        if (antall == 0):
+        antall = c.fetchall()
+        if (antall[0][0] == 0):
             unikEpost = True
         else:
             print("Eposten er allerede registrert. Prøv igjen.")
@@ -472,5 +472,4 @@ def BH_g():
 def BH_h():
     pass
 
-BH_c()
-# main()
+main()
