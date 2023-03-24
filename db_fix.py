@@ -264,9 +264,6 @@ def BH_d():
 
     #Printer resultatene
     if (len(muligeRuter) > 0):
-        print(f"Fra {startStasjon} til {sluttStasjon} går disse togene: ")
-        print(f" ID |   Dato   | Rute | Avgang | Ankomst ")
-        print("-----------------------------------")
         muligeAvganger = []
         for rute in muligeRuter:
             #Sjekker om det går tog med denne ruten på angitt dato
@@ -283,11 +280,14 @@ def BH_d():
             for avgang in res:
                 muligeAvganger.append([avgang[2], rute[0], avgangstid, ankomsttid, avgang[0]])
         muligeAvganger.sort()
-        for el in muligeAvganger:
-            print(f"{el[4]}   |{el[0][:10]}|  {el[1]}   |  {el[2]}  | {el[3]}")
-
-    else:
-        print("Ingen ruter funnet")
+        if len(muligeAvganger) > 0:
+            print(f"Fra {startStasjon} til {sluttStasjon} går disse togene: ")
+            print(f" ID |   Dato   | Rute | Avgang | Ankomst ")
+            print("-----------------------------------")
+            for el in muligeAvganger:
+                print(f"{el[4]}   |{el[0][:10]}|  {el[1]}   |  {el[2]}  | {el[3]}")
+        else:
+            print("Ingen ruter funnet")
 
     main()
 
