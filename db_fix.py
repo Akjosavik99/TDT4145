@@ -208,37 +208,88 @@ def settRekkefølge(startStasjon, delstrekninger, rekkefølgeListe):
 #returneres, sortert på tid. Denne funksjonaliteten skal programmeres.
 
 def BH_d():
-    # Henter startstasjon, sluttstasjon og dato
-    startStasjon, sluttStasjon, dato1, dato2 = hentStasjonDato()
+   
+    startStasjon, sluttStasjon, dato1, dato2, startStasjonID, sluttStasjonID = hentStasjonDato()
+
+    # Finner alle togruter som går gjennom startstasjonen.
     
     c.execute("""
-        SELECT t.ruteID, s.stasjonsnavn, i.ankomsttid, i.avgangstid, tf.dato FROM Togrute as t
-        JOIN InngaarITogrute AS i ON i.ruteID = t.ruteID
-        JOIN Stasjon AS s ON s.stasjonID = i.stasjonID
-        JOIN Togruteforekomst AS tf on tf.ruteID = t.ruteID
-        WHERE (s.stasjonsnavn = :startStasjon OR s.stasjonsnavn = :sluttStasjon) AND (tf.dato LIKE :dato1 OR tf.dato LIKE :dato2)
-        ORDER BY tf.dato, t.ruteID ASC
-    """, {"startStasjon": startStasjon, "sluttStasjon": sluttStasjon, "dato1" : dato1, "dato2": dato2  } )
+        SELECT ruteID
+        FROM InngaarITogrute
+        WHERE stasjonID = :stasjonId
+        """,
+        {"stasjonId": str(startStasjonID)}
+    )
+    ruterSomGarGjennomStart = c.fetchall()
 
-    res = c.fetchall()
-    forekomster = []
-    #Lager en liste med [dato, ruteID, ankomsttid, avgangstid]
-    for i in range(0,len(res),2): #Går gjennom annenhver og legger til avgangstid og ankomsttid
-        info = [res[i][4], res[i][0],"", ""]
-        if (res[i][3] != None and res[i+1][2] != None): 
-            info[2] = res[i][3]
-            info[3] = res[i+1][2]
-            forekomster.append(info)
+    muligeRuter = []
+
+    # Algoritme for å finne togruter som går mellom stasjonene.
+    for rute in ruterSomGarGjennomStart:
+        # Henter først ut hva som er start og sluttstasjon i ruten
+        c.execute("SELECT * FROM StasjonITogrute WHERE (ruteID = :ruteId)", {"ruteId": str(rute[0])})
+        ruteInfo = c.fetchall()
+        # Henter ut om ruten går med eller imot hovedretningen til banen
+        c.execute("SELECT hovedretning FROM Togrute WHERE (ruteID = :ruteId)", {"ruteId": str(rute[0])})
+        hovedretning = c.fetchone()
+        erPåEndestasjon = False
+        startstasjonFunnet = False
+        currentStation = ()
+        # Finner ut startstasjonen til ruten er der man ønsker og starte samt setter startstasjon for algoritmen til denne stasjonen
+        for stasjon in ruteInfo:
+            if stasjon[2] == 'start' and stasjon[1] == startStasjonID:
+                startstasjonFunnet = True
+            if stasjon[2] == 'start':
+                currentStation = stasjon[1]
+        while not erPåEndestasjon:
+            # Spørringen er motsatt om man kjører imot hovedretningen
+            if hovedretning[0] == 1:
+                c.execute("SELECT * FROM Stasjon WHERE (Stasjon.stasjonID = (SELECT stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :stasjonId and S.stasjonID = B.stasjonID and B.stasjonsType = 'start')) and B.stasjonsType = 'ende')))", {"stasjonId": currentStation})
+            else:
+                c.execute("SELECT * FROM Stasjon WHERE (Stasjon.stasjonID = (SELECT stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :stasjonId and S.stasjonID = B.stasjonID and B.stasjonsType = 'ende')) and B.stasjonsType = 'start')))", {"stasjonId": currentStation})
+            nesteStasjon = c.fetchone()
+            # Hvis man er kommet til siste stasjon og det ikke er flere stasjoner, samt ikke funnet destinasjonen betyr det at man ikke kan bruke denne ruten.
+            if nesteStasjon == None:
+                break
+            # Hvis man finner startstasjonen langs ruten kan man se etter endestasjon.
+            if nesteStasjon[0] == startStasjonID and not startstasjonFunnet:
+                startstasjonFunnet = True
+            # Hvis man kommer til endestasjonen og startstasjon er funnet langs ruten har man en rute man kan reise med.
+            if nesteStasjon[0] == sluttStasjonID and startstasjonFunnet:
+                muligeRuter.append(rute)
+                break
+            if ruteInfo[1][1] == nesteStasjon[1]:
+                break
+            currentStation = nesteStasjon[0]
 
     #Printer resultatene
-    if (len(forekomster) > 0):
+    if (len(muligeRuter) > 0):
         print(f"Fra {startStasjon} til {sluttStasjon} går disse togene: ")
-        print(f"   Dato   |RuteID| Avgang | Ankomst ")
+        print(f" ID |   Dato   | Rute | Avgang | Ankomst ")
         print("-----------------------------------")
-        for el in forekomster:
-            print(f"{el[0][:10]}|  {el[1]}   |  {el[2]}  | {el[3]}")
+        muligeAvganger = []
+        for rute in muligeRuter:
+            #Sjekker om det går tog med denne ruten på angitt dato
+            c.execute("SELECT * FROM Togruteforekomst WHERE (ruteID = :ruteId AND (dato LIKE :dato1 OR dato LIKE :dato2))", {"dato1": dato1, "dato2": dato2, "ruteId": rute[0]})
+            res = c.fetchall()
+            avgangstid = ""
+            ankomsttid = ""
+            if (len(res) > 0):
+                # Finner avgangstid på startstasjon og ankomsttid på endestasjon
+                c.execute("SELECT avgangstid FROM InngaarITogrute WHERE (ruteID = :ruteId AND stasjonID = :avgangStasjonID)", {"ruteId": rute[0], "avgangStasjonID": startStasjonID})
+                avgangstid = c.fetchone()[0]
+                c.execute("SELECT ankomsttid FROM InngaarITogrute WHERE (ruteID = :ruteId AND stasjonID = :avgangStasjonID)", {"ruteId": rute[0], "avgangStasjonID": sluttStasjonID})
+                ankomsttid = c.fetchone()[0]
+            for avgang in res:
+                muligeAvganger.append([avgang[2], rute[0], avgangstid, ankomsttid, avgang[0]])
+        muligeAvganger.sort()
+        for el in muligeAvganger:
+            print(f"{el[4]}   |{el[0][:10]}|  {el[1]}   |  {el[2]}  | {el[3]}")
+
     else:
         print("Ingen ruter funnet")
+
+    main()
 
 def hentStasjonDato():
     c.execute("SELECT * FROM stasjon")
@@ -248,8 +299,11 @@ def hentStasjonDato():
     for stasjon in muligeStartStasjoner:
         print(str(stasjon[0]) + " | " + stasjon[2])
 
-    startStasjon = muligeStartStasjoner[int(input("Hvor starter turen? (Velg en ID): "))-1][2]
-    sluttStasjon = muligeStartStasjoner[int(input("Hvor slutter turen? (Velg en ID): "))-1][2]
+    startStasjonID = int(input("Hvor starter turen? (Velg en ID): "))
+    sluttStasjonID = int(input("Hvor ender turen? (Velg en ID): "))
+
+    startStasjon = muligeStartStasjoner[startStasjonID-1][2]
+    sluttStasjon = muligeStartStasjoner[sluttStasjonID-1][2]
 
     # Henter dato fra bruker
     klokkeslett = input("Angi dato og tidspunkt (YYYY-MM-DD): ")
@@ -259,7 +313,7 @@ def hentStasjonDato():
     dato1 = dato1.strftime("%Y-%m-%d") + "%"
     dato2 = dato2.strftime("%Y-%m-%d") + "%"
 
-    return startStasjon, sluttStasjon, dato1, dato2
+    return startStasjon, sluttStasjon, dato1, dato2, startStasjonID, sluttStasjonID
 
 def BH_e():
     navn = input("Skriv inn navnet ditt: ")
