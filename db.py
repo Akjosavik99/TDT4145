@@ -53,7 +53,7 @@ def BH_c():
 
     # Må sjekke hvilke ruter som er innom stasjonen på ukedagen + neste dag da en rute
     # kan starte på en ukedag og ende på neste ukedag (nattog)
-    if dagNummer == len(ukedager):
+    if dagNummer == len(ukedager)-1:
         sjekkUkedag = [ukedag, ukedager[0]]
     else:
         sjekkUkedag = [ukedag, ukedager[dagNummer+1] ]
@@ -80,18 +80,22 @@ def BH_c():
         stasjonerMedDagTid = []
         for stasjon in stasjonerIRekkefølge:
             if stasjon == stasjonerIRekkefølge[0]:
-                c.execute("""
-                  SELECT s.stasjonsnavn, i.ankomsttid, i.avgangstid, dag.ukedag FROM Togrute as t
-                  JOIN InngaarITogrute as i ON t.ruteID = i.ruteID
-                  JOIN Stasjon as s ON s.stasjonID = i.stasjonID
-                  JOIN StarterPaaDag as dag ON t.ruteID = dag.ruteID
-                  WHERE t.ruteID = :rute AND s.stasjonsnavn = :stasjon 
-                    AND dag.ukedag = :ukedag1
-                  """,
-                  {"rute": rute, "stasjon": stasjon, "ukedag1": sjekkUkedag[0] }
-                )
-                resultat = c.fetchall()[0]
-                stasjonerMedDagTid.append([stasjon, resultat[1], resultat[2], resultat[3], rute])
+                    c.execute("""
+                    SELECT s.stasjonsnavn, i.ankomsttid, i.avgangstid, dag.ukedag FROM Togrute as t
+                    JOIN InngaarITogrute as i ON t.ruteID = i.ruteID
+                    JOIN Stasjon as s ON s.stasjonID = i.stasjonID
+                    JOIN StarterPaaDag as dag ON t.ruteID = dag.ruteID
+                    WHERE t.ruteID = :rute AND s.stasjonsnavn = :stasjon 
+                        AND (dag.ukedag = :ukedag1)
+                    """,
+                    {"rute": rute, "stasjon": stasjon, "ukedag1": sjekkUkedag[0]}# "ukedag2": sjekkUkedag[1] }
+                        # OR dag.ukedag = :ukedag2)
+                    )
+                    resultat = c.fetchall()
+                    if len(resultat) > 0:
+                        resultat = resultat[0]
+                        stasjonerMedDagTid.append([stasjon, resultat[1], resultat[2], resultat[3], rute])
+                        
             else:
                 c.execute("""
                   SELECT s.stasjonsnavn, i.ankomsttid, i.avgangstid, dag.ukedag FROM Togrute as t
@@ -108,16 +112,18 @@ def BH_c():
                 ankomsttid = int(resultat[1])
 
                 # Sjekker om ankomsttid er før avgangstid fra forrige stasjon (ny dag)
-                if (ankomsttid - int(stasjonerMedDagTid[-1][2])) < 0:
-                    if ukedager.index(resultat[3]) == 6:
-                        dag = "mandag"
+                if (len(stasjonerMedDagTid) > 0):
+                    if (ankomsttid - int(stasjonerMedDagTid[-1][2])) < 0:
+                        print(f"ankomsttid {ankomsttid} - stasjonerMedDagTid[-1][2] {stasjonerMedDagTid[-1][2]}")
+                        if ukedager.index(resultat[3]) == 6:
+                            dag = "mandag"
+                        else:
+                            dag = ukedager[ukedager.index(resultat[3])+1]
                     else:
-                        dag = ukedager[ukedager.index(resultat[3])+1]
-                else:
-                    dag = stasjonerMedDagTid[-1][3]
+                        dag = stasjonerMedDagTid[-1][3]
 
-                # Legger til stasjonen i listen med navn, ankomsttid, avgangstid, dag, rute
-                stasjonerMedDagTid.append([stasjon, resultat[1], resultat[2], dag, rute])
+                    # Legger til stasjonen i listen med navn, ankomsttid, avgangstid, dag, rute
+                    stasjonerMedDagTid.append([stasjon, resultat[1], resultat[2], dag, rute])
         stasjonerMedDagTidListe.append(stasjonerMedDagTid)
 
     # Printer resultatet
@@ -467,5 +473,5 @@ def BH_g():
 def BH_h():
     pass
 
-#BH_g()
-main()
+BH_c()
+# main()
