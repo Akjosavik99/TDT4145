@@ -479,6 +479,7 @@ def BH_g():
                 break
 
         print(f"{ledigPlass} er tilgjengelig")
+        print("hei")
 
 
 
