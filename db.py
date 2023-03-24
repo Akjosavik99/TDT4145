@@ -132,7 +132,7 @@ def BH_c():
             # Printer ruten hvis dag og stasjonnavn stemmer
             if (stasjon[0] == stasjonNavn and (stasjon[3] == sjekkUkedag[0] or stasjon[3] == sjekkUkedag[1])):
                 print(f"Rute {stasjon[4]}")
-
+    main()
 
 # Funksjon som returnerer en liste med stasjonene i riktig rekkefølge
 def listeMedStasjoner(ruteID):
@@ -200,7 +200,6 @@ def settRekkefølge(startStasjon, delstrekninger, rekkefølgeListe):
     if (len(rekkefølgeListe) < len(delstrekninger)+1):
         settRekkefølge(startStasjon, delstrekninger, rekkefølgeListe)
     return rekkefølgeListe
-
 
 #Bruker skal kunne søke etter togruter som går mellom en startstasjon og en sluttstasjon, med
 #utgangspunkt i en dato og et klokkeslett. Alle ruter den samme dagen og den neste skal
@@ -368,6 +367,8 @@ def BH_d():
 
     else:
         print("Ingen ruter funnet")
+    
+    main()
 
 def hentStasjonDato():
     c.execute("SELECT * FROM Stasjon")
@@ -472,5 +473,5 @@ def BH_g():
 def BH_h():
     pass
 
-BH_c()
-# main()
+
+main()
