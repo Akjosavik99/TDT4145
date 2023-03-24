@@ -368,7 +368,9 @@ def BH_g():
         for kupe in opptatteKupeer:
             opptatte.add(kupe[0])
 
-        ledigeKupeer = kupeIForekomst.difference(opptatte)
+        ledigeKupeer = list(kupeIForekomst.difference(opptatte))
+
+        sengerIgjen = kundeOnskerAntallSenger
 
         for i in range(0, antallKupeer):
             tidspunktForOrdre = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -377,9 +379,16 @@ def BH_g():
             con.commit()
             c.execute("SELECT ordrenummer FROM Ordre WHERE (dato = :tidspunkt and kundenummer = :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": 1})
             ordrenummer = c.fetchone()[0]
-            c.execute("INSERT INTO Billett (forekomstID, ordrenummer) VALUES (:forekomstId, :ordrenummer)", {"forekomstId": forekomstID, "ordrenummer": ordrenummer[0]})
+            c.execute("INSERT INTO Billett (forekomstID, ordrenummer) VALUES (:forekomstId, :Ordrenummer)", {"forekomstId": forekomstID, "Ordrenummer": ordrenummer})
+            con.commit()
+            c.execute("SELECT billettID FROM Billett as B WHERE (b.forekomstId = :forekomstId and b.ordrenummer = :ordrenummer)", {"forekomstId": forekomstID, "ordrenummer": ordrenummer})
+            billettID = c.fetchone()
+            c.execute("SELECT DISTINCT H.vognID FROM Togruteforekomst as T INNER JOIN HarVogner as H ON (T.forekomstID = :forekomstId and H.ruteID = T.ruteID) INNER JOIN Vogn as V ON (V.vognID = H.vognID and V.vognType = 'sove') INNER JOIN Kupe as K ON (H.vognID = K.vognID)", {"forekomstId": forekomstID})
+            vognID = c.fetchone()[0]
 
-            c.execute("INSERT INTO Sovebillett ()")
+            c.execute("INSERT INTO Sovebillett (billettID, antallSenger, kupenummer, vognID) VALUES (:billettID, :antallSenger, :kupenummer, :vognID)", {"billettID": billettID[0], "antallSenger": 1 if sengerIgjen == 1 else 2, "kupenummer": ledigeKupeer[i], "vognID": vognID})
+            sengerIgjen = sengerIgjen - 1 if sengerIgjen == 1 else 2
+            con.commit()
 
 
 
