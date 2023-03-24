@@ -5,8 +5,8 @@ con = sql.connect('tog.db')
 c = con.cursor()
 
 def main():
-    brukerhistorie = input(f"""Skriv en bokstav mellom c og h for å velge
-        brukerhistorie, trykk enter for å avslutte programmet: """).lower()
+    brukerhistorie = input(f"Skriv en bokstav mellom c og h for å velge " +
+        "brukerhistorie, trykk enter for å avslutte programmet: ").lower()
     if brukerhistorie == "":
         print("Programmet er ferdig")
     elif brukerhistorie == "c":
@@ -34,7 +34,6 @@ def BH_c():
       FROM stasjon
     """)
     muligeStartStasjoner = c.fetchall()
-    print(muligeStartStasjoner)
     print("___________\nMulige startstasjoner:\n\n")
     print("ID | StasjonNavn")
     for stasjon in muligeStartStasjoner:
