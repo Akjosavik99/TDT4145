@@ -1,3 +1,4 @@
+-- Legger til forekomster av togrutene som kan bestilles.
 INSERT INTO Togruteforekomst(ruteID, dato) VALUES (1, "2023-04-03 07:49:00");
 
 INSERT INTO Togruteforekomst(ruteID, dato) VALUES (1, "2023-04-04 07:49:00");
