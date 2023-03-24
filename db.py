@@ -29,7 +29,10 @@ def main():
 # Denne funksjonaliteten skal programmeres.
 
 def BH_c():
-    c.execute("SELECT * FROM stasjon")
+    c.execute("""
+      SELECT *
+      FROM stasjon
+    """)
     muligeStartStasjoner = c.fetchall()
     print(muligeStartStasjoner)
     print("___________\nMulige startstasjoner:\n\n")
@@ -129,7 +132,8 @@ def BH_c():
 # Funksjon som returnerer en liste med stasjonene i riktig rekkefølge
 def listeMedStasjoner(ruteID):
     c.execute("""
-      SELECT t.ruteID, d.delstrekningID, s.stasjonID, s.stasjonsnavn  FROM Togrute as t
+      SELECT t.ruteID, d.delstrekningID, s.stasjonID, s.stasjonsnavn
+      FROM Togrute as t
       JOIN BestarAvDelstrekninger as b ON b.ruteID = t.ruteID
       JOIN Delstrekning as d ON b.delstrekningID = d.delstrekningID
       JOIN InngaarITogrute as i ON t.ruteID = i.ruteID
@@ -156,7 +160,8 @@ def listeMedStasjoner(ruteID):
 
     # Finner startstasjonen for ruten
     c.execute("""
-      SELECT s.stasjonsnavn, t.ruteID, st.stasjonsType FROM Togrute as t
+      SELECT s.stasjonsnavn, t.ruteID, st.stasjonsType
+      FROM Togrute as t
       JOIN StasjonITogrute as st ON st.ruteID = t.ruteID
       JOIN Stasjon as s ON s.stasjonID = st.stasjonID
       WHERE t.ruteID = :ruteID 
@@ -202,8 +207,12 @@ def BH_d():
 
     # Finner alle togruter som går gjennom startstasjonen.
 
-    c.execute("SELECT ruteID FROM InngaarITogrute WHERE stasjonID = :stasjonId",
-         {"stasjonId": str(startStasjon)})
+    c.execute("""
+      SELECT ruteID 
+      FROM InngaarITogrute 
+      WHERE stasjonID = :stasjonId
+    """,
+    {"stasjonId": str(startStasjon)})
     ruterSomGarGjennomStart = c.fetchall()
 
     muligeRuter = []
@@ -211,13 +220,21 @@ def BH_d():
     # Algoritme for å finne togruter som går mellom stasjonene.
     for rute in ruterSomGarGjennomStart:
         # Henter først ut hva som er start og sluttstasjon i ruten
-        c.execute("SELECT * FROM StasjonITogrute WHERE (ruteID = :ruteId)", 
-          {"ruteId": str(rute[0])}
+        c.execute("""
+          SELECT * 
+          FROM StasjonITogrute 
+          WHERE (ruteID = :ruteId)
+        """, 
+        {"ruteId": str(rute[0])}
         )
         ruteInfo = c.fetchall()
         # Henter ut om ruten går med eller imot hovedretningen til banen
-        c.execute("SELECT hovedretning FROM Togrute WHERE (ruteID = :ruteId)", 
-          {"ruteId": str(rute[0])}
+        c.execute("""
+          SELECT hovedretning 
+          FROM Togrute 
+          WHERE (ruteID = :ruteId)
+        """, 
+        {"ruteId": str(rute[0])}
         )
         hovedretning = c.fetchone()
         erPåEndestasjon = False
@@ -245,8 +262,9 @@ def BH_d():
                       INNER JOIN BestarAvStasjon AS B ON S.stasjonID = B.stasjonID
                       WHERE S.stasjonID = :stasjonId AND B.stasjonsType = 'start'
                     )
-                    AND B.stasjonsType = 'ende')""",
-                  {"stasjonId": currentStation}
+                    AND B.stasjonsType = 'ende')
+                """,
+                {"stasjonId": currentStation}
                 )
             else:
                 c.execute("""
@@ -271,8 +289,8 @@ def BH_d():
                       )
                     )
                   )
-                  """,
-                  {"stasjonId": currentStation}
+                """,
+                {"stasjonId": currentStation}
                 )
             nesteStasjon = c.fetchone()
             # Hvis man er kommet til siste stasjon og det ikke er flere stasjoner, 
@@ -307,8 +325,8 @@ def BH_d():
                   dato LIKE :dato1 OR dato LIKE :dato2
                 )
               )
-              """, 
-              {"dato1": dato1, "dato2": dato2, "ruteId": rute[0]}
+            """, 
+            {"dato1": dato1, "dato2": dato2, "ruteId": rute[0]}
             )
             res = c.fetchall()
             avgangstid = ""
@@ -322,8 +340,8 @@ def BH_d():
                     ruteID = :ruteId 
                       AND stasjonID = :avgangStasjonID
                   )
-                  """,
-                  {"ruteId": rute[0], "avgangStasjonID": startStasjon}
+                """,
+                {"ruteId": rute[0], "avgangStasjonID": startStasjon}
                 )
                 avgangstid = c.fetchone()[0]
                 c.execute("""
@@ -333,8 +351,8 @@ def BH_d():
                     ruteID = :ruteId 
                       AND stasjonID = :avgangStasjonID
                   )
-                  """,
-                  {"ruteId": rute[0], "avgangStasjonID": sluttStasjon}
+                """,
+                {"ruteId": rute[0], "avgangStasjonID": sluttStasjon}
                 )
                 ankomsttid = c.fetchone()[0]
             for avgang in res:
@@ -379,8 +397,8 @@ def BH_e():
           SELECT COUNT(tlf) 
           FROM Kunde 
           WHERE tlf = :tlf
-          """, 
-          {"tlf": tlf})
+        """, 
+        {"tlf": tlf})
         con.commit()
         if (antall == 0):
             unikTlf = True
@@ -429,15 +447,16 @@ def BH_g():
     ruteID = int(input(f"Skriv inn hvilken rute du ønsker å ta: "))
 
     c.execute("""
-        SELECT s.setenummer, s.radnummer, s.vognID, sb.billettID, d.delstrekningID, b.forekomstID, tf.ruteID, tf.dato FROM Sete AS s
+        SELECT s.setenummer, s.radnummer, s.vognID, sb.billettID, d.delstrekningID, b.forekomstID, tf.ruteID, tf.dato 
+        FROM Sete AS s
         LEFT JOIN Sittebillett AS sb ON (sb.vognID = s.vognID AND sb.radnummer = s.radnummer AND sb.setenummer = s.setenummer)
         LEFT JOIN Delstrekning AS d ON d.delstrekningID = sb.delstrekningID
         LEFT JOIN Billett AS b ON b.billettID = sb.billettID
         LEFT JOIN Togruteforekomst AS tf ON tf.forekomstID = b.forekomstID
         WHERE (tf.dato LIKE :dato AND tf.ruteID = :ruteID)
         ORDER BY sb.billettID ASC
-        """,
-        {"dato": dato, "ruteID": ruteID}
+    """,
+    {"dato": dato, "ruteID": ruteID}
     )
 
     res = c.fetchall()
@@ -448,5 +467,5 @@ def BH_g():
 def BH_h():
     pass
 
-BH_e()
-# main()
+#BH_g()
+main()
