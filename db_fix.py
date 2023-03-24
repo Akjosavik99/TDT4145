@@ -5,10 +5,16 @@ con = sql.connect('tog.db')
 c = con.cursor()
 
 def main():
-    brukerhistorie = input(f"Skriv en bokstav mellom c og h for å velge " +
+    brukerhistorie = input(f"Skriv en bokstav mellom a og h for å velge " +
         "brukerhistorie, trykk enter for å avslutte programmet: ").lower()
     if brukerhistorie == "":
         print("Programmet er ferdig")
+    elif brukerhistorie == "a":
+        print("Se 'brukerhistorieA.sql' da denne brukerhistorien ikke er programmert")
+        main()
+    elif brukerhistorie == "b":
+        print("Se 'brukerhistorieB.sql' da denne brukerhistorien ikke er programmert")
+        main()
     elif brukerhistorie == "c":
         BH_c()
     elif brukerhistorie == "d":
@@ -16,7 +22,7 @@ def main():
     elif brukerhistorie == "e":
         BH_e()
     elif brukerhistorie == "f":
-        BH_f()
+        print("Se 'brukerhistorieF.sql' da denne brukerhistorien ikke er programmert")
     elif brukerhistorie == "g":
         BH_g()
     elif brukerhistorie == "h":
@@ -355,14 +361,6 @@ def BH_e():
         {"navn": navn, "tlf": tlf, "epost": epost})
     con.commit()
     print(f"Kunde registrert: {navn}, {tlf}, {epost}")
-
-# Det skal legges inn nødvendige data slik at systemet kan håndtere billettkjøp for de tre togrutene
-# på Nordlandsbanen, mandag 3. april og tirsdag 4. april i år. Dette kan gjøres med et skript, dere
-# trenger ikke å programmere støtte for denne funksjonaliteten.
-def BH_f():
-    pass
-
-
 
 # Registrerte kunder skal kunne finne ledige billetter for en oppgitt strekning på en ønsket togrute
 # og kjøpe de billettene hen ønsker. Denne funksjonaliteten skal programmeres.
