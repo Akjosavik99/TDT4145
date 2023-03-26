@@ -34,12 +34,17 @@ fd.close()
 
 files = []
 
-if (sys.argv[1] == "-f" and sys.argv[2] == "-td"):
-    files = ["tog.sql", "brukerhistorieA.sql", 'brukerhistorieB.sql', 'brukerhistorieF.sql', 'test_data.sql']
-elif (sys.argv[1] == "-f"):
-    files = ["tog.sql", "brukerhistorieA.sql", 'brukerhistorieB.sql', 'brukerhistorieF.sql']
-elif (sys.argv[1] == "-m"):
-    files = ["tog.sql"]
+if (len(sys.argv) > 1 ):
+    if (sys.argv[1] == "-fd"):
+        files = ["tog.sql", "brukerhistorieA.sql", 'brukerhistorieB.sql', 'brukerhistorieF.sql', 'test_data.sql']
+    elif (sys.argv[1] == "-f"):
+        files = ["tog.sql", "brukerhistorieA.sql", 'brukerhistorieB.sql', 'brukerhistorieF.sql']
+    elif (sys.argv[1] == "-m"):
+        files = ["tog.sql"]
+    else:
+        print("Usage: python3 dbgen.py -f OR python3 dbgen.py -fd python3 dbgen.py -m ")
+else:
+    print("Usage: python3 dbgen.py -f OR python3 dbgen.py -fd python3 dbgen.py -m ")
 
 for file in files:
     exexuteSql(file)
