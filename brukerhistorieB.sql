@@ -14,9 +14,6 @@ INSERT INTO Seterad (radnummer, vognID) VALUES (2, 1);
 -- rad 3, sittevogn 1
 INSERT INTO Seterad (radnummer, vognID) VALUES (3, 1);
 
--- rad 4, sittevogn 1
-INSERT INTO Seterad (radnummer, vognID) VALUES (4, 1);
-
 -- rad 1, sittevogn 2
 INSERT INTO Seterad (radnummer, vognID) VALUES (1, 2);
 
@@ -25,10 +22,6 @@ INSERT INTO Seterad (radnummer, vognID) VALUES (2, 2);
 
 -- rad 3, sittevogn 2
 INSERT INTO Seterad (radnummer, vognID) VALUES (3, 2);
-
--- rad 4, sittevogn 2
-INSERT INTO Seterad (radnummer, vognID) VALUES (4, 2);
-
 
 -- Legger til seter på vogn 1
 
@@ -68,19 +61,6 @@ INSERT INTO Sete (setenummer, radnummer, vognID) VALUES (11, 3, 1);
 -- Sete 12, rad 3, sittevogn 1
 INSERT INTO Sete (setenummer, radnummer, vognID) VALUES (12, 3, 1);
 
--- Sete 13, rad 4, sittevogn 1
-INSERT INTO Sete (setenummer, radnummer, vognID) VALUES (13, 4, 1);
-
--- Sete 14, rad 4, sittevogn 1
-INSERT INTO Sete (setenummer, radnummer, vognID) VALUES (14, 4, 1);
-
--- Sete 15, rad 4, sittevogn 1
-INSERT INTO Sete (setenummer, radnummer, vognID) VALUES (15, 4, 1);
-
--- Sete 16, rad 4, sittevogn 1
-INSERT INTO Sete (setenummer, radnummer, vognID) VALUES (16, 4, 1);
-
-
 -- Legger til seter på vogn 2
 
 -- sete 1, rad 1, sittevogn 2
@@ -118,18 +98,6 @@ INSERT INTO Sete (setenummer, radnummer, vognID) VALUES (11, 3, 2);
 
 -- sete 12, rad 3, sittevogn 2
 INSERT INTO Sete (setenummer, radnummer, vognID) VALUES (12, 3, 2);
-
--- sete 13, rad 4, sittevogn 2
-INSERT INTO Sete (setenummer, radnummer, vognID) VALUES (13, 4, 2);
-
--- sete 14, rad 4, sittevogn 2
-INSERT INTO Sete (setenummer, radnummer, vognID) VALUES (14, 4, 2);
-
--- sete 15, rad 4, sittevogn 2
-INSERT INTO Sete (setenummer, radnummer, vognID) VALUES (15, 4, 2);
-
--- sete 16, rad 4, sittevogn 2
-INSERT INTO Sete (setenummer, radnummer, vognID) VALUES (16, 4, 2);
 
 -- Legger til kupéer
 
