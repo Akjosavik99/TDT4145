@@ -385,9 +385,19 @@ def BH_g():
     # Må først finne ut hvilken forekomstID som skal brukes
     forekomstID = int(input(f"Skriv inn hvilken ID du ønsker å ta: "))
 
-    kundenummer = int(input("Skriv inn kundenummer: "))
-    # Sjekker først hva slags vogner som er tilgjengelig på avgangen
 
+    kundenummer = int(input("Skriv inn kundenummer: "))
+    
+    # Sjekker om kunden har et gyldig kundenummer
+    c.execute("SELECT COUNT(kundenummer) FROM Kunde WHERE kundenummer = :kundenummer", {"kundenummer": kundenummer})
+    antall = c.fetchall()
+    while (antall == 0):
+        print("Ugyldig kundenummer. Prøv igjen.")
+        kundenummer = int(input("Skriv inn kundenummer: "))
+        c.execute("SELECT COUNT(kundenummer) FROM Kunde WHERE kundenummer = :kundenummer", {"kundenummer": kundenummer})
+        antall = c.fetchall()
+
+    # Sjekker først hva slags vogner som er tilgjengelig på avgangen
     tilgjengeligeTyper = set()
 
     c.execute("SELECT ruteID FROM Togruteforekomst WHERE(Togruteforekomst.forekomstID=:forekomstId)", {"forekomstId": forekomstID})
