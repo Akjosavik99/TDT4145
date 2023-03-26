@@ -42,9 +42,11 @@ if (len(sys.argv) > 1 ):
     elif (sys.argv[1] == "-m"):
         files = ["tog.sql"]
     else:
-        print("Usage: python3 dbgen.py -f OR python3 dbgen.py -fd python3 dbgen.py -m ")
+        print("Usage unix: python3 dbgen.py -f OR python3 dbgen.py -fd python3 dbgen.py -m ")
+        print("If python3 fails, try replacing it with py or python")
 else:
     print("Usage: python3 dbgen.py -f OR python3 dbgen.py -fd python3 dbgen.py -m ")
+    print("If python3 fails, try replacing it with py or python")
 
 for file in files:
     exexuteSql(file)
