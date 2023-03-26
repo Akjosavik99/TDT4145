@@ -24,6 +24,7 @@ def main():
         BH_e()
     elif brukerhistorie == "f":
         print("Se 'brukerhistorieF.sql' da denne brukerhistorien ikke er programmert")
+        main()
     elif brukerhistorie == "g":
         BH_g()
     elif brukerhistorie == "h":
@@ -520,8 +521,7 @@ def kjopSittebillett(forekomstID, kundenummer, startStasjonID, sluttStasjonID, t
         if ledigPåAlleDestrekninger:
             ledigPlass = plass
             break
-
-    print(f"{ledigPlass} er tilgjengelig")
+    print(f"Sete {ledigPlass[0]} på rad {ledigPlass[1]} i vogn {ledigPlass[2]} er tilgjengelig")
 
     if (ledigPlass == []):
         print("Toget er fullt. Prøv en annen avgang.")
