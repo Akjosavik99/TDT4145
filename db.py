@@ -553,7 +553,7 @@ def kjopSovebillett(forekomstID, kundenummer, startStasjonID, sluttStasjonID, ti
     opptatteKupeer = c.fetchall()
     if len(antallKupeerIForekomst) - len(opptatteKupeer) == 0:
         print("Toget er fullt prøv en annen avgang")
-        exit(0)
+        main()
 
 
     kundeOnskerAntallSenger = int(input("Ønsker du en eller to sengeplasser? (skriv inn '1' eller '2'): "))
@@ -621,8 +621,8 @@ def BH_h():
     print()
 
     c.execute("""
-    SELECT
-    tf.ruteID, tf.dato, t.hovedretning, bs1.stasjonsType, s1.stasjonsnavn, sb.vognID, sb.radnummer, sb.setenummer, bs2.stasjonsType, s2.stasjonsnavn, so.vognID, so.kupenummer, so.antallSenger
+    SELECT 
+    tf.ruteID, tf.dato, t.hovedretning, bs1.stasjonsType, s1.stasjonsnavn, sb.vognID, sb.radnummer, sb.setenummer, bs2.stasjonsType, s2.stasjonsnavn, so.vognID, so.kupenummer, so.antallSenger, b.ordrenummer
     FROM Kunde AS k
 
     JOIN Ordre AS o ON o.kundenummer = k.kundenummer
@@ -634,57 +634,75 @@ def BH_h():
     LEFT JOIN BestarAvStasjon AS bs2 ON bs2.delstrekningID = so.delstrekningID
     LEFT JOIN Stasjon AS s1 ON s1.stasjonID = bs1.stasjonID
     LEFT JOIN Stasjon AS s2 ON s2.stasjonID = bs2.stasjonID
-    LEFT JOIN Togrute AS t ON t.ruteID = tf.ruteID
+    LEFT JOIN Togrute AS t ON t.ruteID = tf.ruteID 
     WHERE k.tlf = :tlf
-    ORDER BY tf.dato, bs1.delstrekningID, bs2.delstrekningID ASC
+    ORDER BY tf.dato, b.ordrenummer, bs1.delstrekningID, bs2.delstrekningID ASC
     """, {"tlf": tlf})
 
     res = c.fetchall()
 
-    ruterMedDato = {} # {dato : string}
+    ruterMedDato = {} # {dato : [datoString, {ordrenummer: billettString}, {ordrenummer: billettString}]}
 
     for i in range(len(res)):
-        # [ruteID, dato, hovedretning, sb.stasjonstype, sb.stasjonsnavn, SittevognID, radnummer, setenummer, so.stasjonstype, so.stasjonsnavn, SovevognID, kupenummer, antallSenger]
-        sammeTur = []
+        # [ruteID, dato, hovedretning, sb.stasjonstype, sb.stasjonsnavn, SittevognID, radnummer, setenummer, so.stasjonstype, so.stasjonsnavn, SovevognID, kupenummer, antallSenger, ordrenummer]
+        sammeTur = [] #[[billett (ordrenummer:1), billett (ordrenummer:1)], [billtt (ordrenummer:2), billett (ordrenummer:2)]]
         # Legger til alle som har samme tidspunkt i en liste
         for j in range(i, len(res)):
+            # Sjekker at det er samme dato
             if (res[i][1] == res[j][1]):
                 sammeTur.append(res[j])
             else:
                 break
-        #Verdier for sittebillett
-        sittebillett = False
-        num = 4
-        # Hvis sovebillett endres verdier
-        if (res[i][3] == None):
-            num = 9
-            sittebillett = True
 
-        #Henter start/endestasjon
-        if (sammeTur[0][2] == 1):
-            startStasjon = sammeTur[0][num]
-            sluttStasjon = sammeTur[-1][num]
-        else:
-            startStasjon = sammeTur[-1][num]
-            sluttStasjon = sammeTur[0][num]
+        ordrer = {}
+        for j in range(len(sammeTur)-1):
+            if sammeTur[j][13] not in ordrer:
+                ordrer[sammeTur[j][13]] = [sammeTur[j]]
+            else:
+                ordrer[sammeTur[j][13]].append(sammeTur[j])
 
-        string = f"Du har en reise den {res[i][1]} fra {startStasjon} til {sluttStasjon} med rute {sammeTur[0][0]}.\n"
+        datoInfo = []
+        for ordre, ruter in ordrer.items():
+            for rute in ruter:
+                #Verdier for sittebillett
+                sittebillett = False
+                num = 4
+                # Hvis sovebillett endres verdier
+                if (rute[3] == None):
+                    num = 9
+                    sittebillett = True
+                
+                #Henter start/endestasjon
+                if (rute[2] == 1):
+                    startStasjon = ordrer[rute[13]][0][num]
+                    sluttStasjon = ordrer[rute[13]][-1][num]
+                else:
+                    startStasjon = ordrer[rute[13]][-1][num]
+                    sluttStasjon = ordrer[rute[13]][0][num]
+                if (len(datoInfo) == 0):
+                    datoInfo.append(f"Du har en reise den {res[i][1]} fra {startStasjon} til {sluttStasjon} med rute {res[i][0]}.\n")
 
-        if (sittebillett) :
-            string += f"Du har en sovebillett i vogn {res[i][10]} i kupé {res[i][11]} med {res[i][12]} senger."
-        else:
-            string += f"Du har en sittebillett på sete {res[i][7]}, rad {res[i][6]}, vogn {res[i][5]}.\n"
+                if (sittebillett) :
+                    billettString = f"- {rute[12]} Sovebillett(er) i vogn {rute[10]} i kupé {rute[11]}."
+                else:
+                    billettString = f"- 1 Sittebillett på sete {rute[7]}, rad {rute[6]}, vogn {rute[5]}."
 
+                datoInfo.append(billettString)
+                break
+
+            
         if res[i][1] not in ruterMedDato and res[i][1][:10] >= dagensDato:
-            ruterMedDato[res[i][1]] = string
+            ruterMedDato[res[i][1]] = datoInfo
 
     # Printer reisene
-    for s in ruterMedDato.values():
-        print(s)
-
+    for info in ruterMedDato.values():
+        for i in range(len(info)):
+            print(info[i])
+        print("-----------------------------------------------------")
+    
     if (len(ruterMedDato) == 0):
         print("Du har ingen fremtidige reiser.")
-
+    
     main()
 
 main()
