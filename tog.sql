@@ -195,6 +195,7 @@ CREATE TABLE
         CONSTRAINT 'maks2Senger' CHECK(
             antallSenger BETWEEN 1 AND 2
         ),
+        FOREIGN KEY (delstrekningID) REFERENCES Delstrekning(delstrekningID) ON DELETE CASCADE,
         FOREIGN KEY (billettID) REFERENCES Billett(billettID) ON DELETE CASCADE,
         FOREIGN KEY (delstrekningID) REFERENCES Delstrekning(delstrekningID) ON DELETE CASCADE,
         FOREIGN KEY (kupenummer, vognID) REFERENCES Kupe(kupenummer, vognID) ON DELETE CASCADE,
