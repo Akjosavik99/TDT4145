@@ -84,17 +84,17 @@ def BH_c():
         stasjonerIRekkefølge = listeMedStasjoner(rute)
         stasjonerMedDagTid = []
         for stasjon in stasjonerIRekkefølge:
+            # Sjekker om det er startstasjon
             if stasjon == stasjonerIRekkefølge[0]:
                     c.execute("""
-                    SELECT s.stasjonsnavn, i.ankomsttid, i.avgangstid, dag.ukedag FROM Togrute as t
-                    JOIN InngaarITogrute as i ON t.ruteID = i.ruteID
-                    JOIN Stasjon as s ON s.stasjonID = i.stasjonID
-                    JOIN StarterPaaDag as dag ON t.ruteID = dag.ruteID
+                    SELECT s.stasjonsnavn, i.ankomsttid, i.avgangstid, dag.ukedag FROM Togrute AS t
+                    JOIN InngaarITogrute AS i ON t.ruteID = i.ruteID
+                    JOIN Stasjon AS s ON s.stasjonID = i.stasjonID
+                    JOIN StarterPaaDag AS dag ON t.ruteID = dag.ruteID
                     WHERE t.ruteID = :rute AND s.stasjonsnavn = :stasjon 
                         AND (dag.ukedag = :ukedag1)
                     """,
-                    {"rute": rute, "stasjon": stasjon, "ukedag1": sjekkUkedag[0]}# "ukedag2": sjekkUkedag[1] }
-                        # OR dag.ukedag = :ukedag2)
+                    {"rute": rute, "stasjon": stasjon, "ukedag1": sjekkUkedag[0]}
                     )
                     resultat = c.fetchall()
                     if len(resultat) > 0:
@@ -103,10 +103,10 @@ def BH_c():
                         
             else:
                 c.execute("""
-                  SELECT s.stasjonsnavn, i.ankomsttid, i.avgangstid, dag.ukedag FROM Togrute as t
-                  JOIN InngaarITogrute as i ON t.ruteID = i.ruteID
-                  JOIN Stasjon as s ON s.stasjonID = i.stasjonID
-                  JOIN StarterPaaDag as dag ON t.ruteID = dag.ruteID
+                  SELECT s.stasjonsnavn, i.ankomsttid, i.avgangstid, dag.ukedag FROM Togrute AS t
+                  JOIN InngaarITogrute AS i ON t.ruteID = i.ruteID
+                  JOIN Stasjon AS s ON s.stasjonID = i.stasjonID
+                  JOIN StarterPaaDag AS dag ON t.ruteID = dag.ruteID
                   WHERE t.ruteID = :rute AND s.stasjonsnavn = :stasjon 
                     AND (dag.ukedag = :ukedag1
                     OR dag.ukedag = :ukedag2)
@@ -119,11 +119,10 @@ def BH_c():
                 # Sjekker om ankomsttid er før avgangstid fra forrige stasjon (ny dag)
                 if (len(stasjonerMedDagTid) > 0):
                     if (ankomsttid - int(stasjonerMedDagTid[-1][2])) < 0:
-                        print(f"ankomsttid {ankomsttid} - stasjonerMedDagTid[-1][2] {stasjonerMedDagTid[-1][2]}")
                         if ukedager.index(resultat[3]) == 6:
-                            dag = "mandag"
+                            dag = ukedager[0]
                         else:
-                            dag = ukedager[ukedager.index(resultat[3])+1]
+                            dag = ukedager[ukedager.index(resultat[3])]
                     else:
                         dag = stasjonerMedDagTid[-1][3]
 
@@ -213,9 +212,12 @@ def settRekkefølge(startStasjon, delstrekninger, rekkefølgeListe):
 #utgangspunkt i en dato og et klokkeslett. Alle ruter den samme dagen og den neste skal
 #returneres, sortert på tid. Denne funksjonaliteten skal programmeres.
 
-def BH_d():
-   
-    startStasjon, sluttStasjon, dato1, dato2, startStasjonID, sluttStasjonID = hentStasjonDato()
+
+def BH_d(startStasjonID, sluttStasjonID, dato1, dato2, startStasjon, sluttStasjon):
+
+    if (startStasjonID == None and sluttStasjonID == None and dato1 == None and dato2 == None):
+        # Henter startstasjon, sluttstasjon og dato
+        startStasjon, sluttStasjon, dato1, dato2, startStasjonID, sluttStasjonID = hentStasjonDato()
 
     # Finner alle togruter som går gjennom startstasjonen.
     
@@ -294,6 +296,8 @@ def BH_d():
                 print(f"{el[4]}   |{el[0][:10]}|  {el[1]}   |  {el[2]}  | {el[3]}")
         else:
             print("Ingen ruter funnet")
+    else:
+        print("Ingen ruter funnet")
 
     main()
 
@@ -362,33 +366,203 @@ def BH_e():
     con.commit()
     print(f"Kunde registrert: {navn}, {tlf}, {epost}")
 
+    main()
+
 # Registrerte kunder skal kunne finne ledige billetter for en oppgitt strekning på en ønsket togrute
 # og kjøpe de billettene hen ønsker. Denne funksjonaliteten skal programmeres.
 # Pass på at dere bare selger ledige plasser
 def BH_g():
-    # Henter startstasjon, sluttstasjon og dato
-    startStasjon, sluttStasjon, dato, dato2 = hentStasjonDato()
+        # Henter startstasjon, sluttstasjon og dato
+    startStasjonNavn, sluttStasjonNavn, dato, dato2, startStasjonID, sluttStasjonID = hentStasjonDato()
+
+    BH_d(startStasjonID, sluttStasjonID, dato, dato2, startStasjonNavn, sluttStasjonNavn)
 
     # Må først finne ut hvilken forekomstID som skal brukes
-    ruteID = int(input(f"Skriv inn hvilken rute du ønsker å ta: "))
+    forekomstID = int(input(f"Skriv inn hvilken ID du ønsker å ta: "))
 
-    c.execute("""
-        SELECT s.setenummer, s.radnummer, s.vognID, sb.billettID, d.delstrekningID, b.forekomstID, tf.ruteID, tf.dato 
-        FROM Sete AS s
-        LEFT JOIN Sittebillett AS sb ON (sb.vognID = s.vognID AND sb.radnummer = s.radnummer AND sb.setenummer = s.setenummer)
-        LEFT JOIN Delstrekning AS d ON d.delstrekningID = sb.delstrekningID
-        LEFT JOIN Billett AS b ON b.billettID = sb.billettID
-        LEFT JOIN Togruteforekomst AS tf ON tf.forekomstID = b.forekomstID
-        WHERE (tf.dato LIKE :dato AND tf.ruteID = :ruteID)
-        ORDER BY sb.billettID ASC
-    """,
-    {"dato": dato, "ruteID": ruteID}
-    )
+    kundenummer = int(input("Skriv inn kundenummer: "))
+    # Sjekker først hva slags vogner som er tilgjengelig på avgangen
 
-    res = c.fetchall()
-    print(res)
+    tilgjengeligeTyper = set()
 
-    pass
+    c.execute("SELECT ruteID FROM Togruteforekomst WHERE(Togruteforekomst.forekomstID=:forekomstId)", {"forekomstId": forekomstID})
+    ruteID = c.fetchone()[0]
+    c.execute("SELECT vognID FROM HarVogner WHERE(ruteID=:ruteId)", {"ruteId": ruteID})
+    vogntyper = c.fetchall()
+
+    for vogn in vogntyper:
+        c.execute("SELECT vognType FROM Vogn WHERE (vognID = :vognId)", {"vognId": vogn[0]})
+        type = c.fetchone()[0]
+        tilgjengeligeTyper.add(type)
+
+    # Spør bruker hva slags billett-type den ønsker
+    print(f"På rute nr: {ruteID} er disse billettypene tilgjenglige {tilgjengeligeTyper}")
+
+    onsketType = input("Skriv inn hvilken bilett du ønsker: (sitte/sove)")
+    tidspunktForOrdre = datetime.now().strftime("%Y-%m-%d %H:%M")
+    # Finner en kupe og seng som er tilgjengelig
+    if onsketType == "sove":
+        c.execute("SELECT kupenummer FROM Togruteforekomst as T INNER JOIN HarVogner as H ON (T.forekomstID = :forekomstId and H.ruteID = T.ruteID) INNER JOIN Vogn as V ON (V.vognID = H.vognID and V.vognType = 'sove') INNER JOIN Kupe as K ON (H.vognID = K.vognID)", {"forekomstId": forekomstID})
+        antallKupeerIForekomst = c.fetchall()
+        c.execute("SELECT DISTINCT kupenummer FROM Billett as B INNER JOIN Sovebillett as S ON (B.forekomstID = :forekomstId)", {"forekomstId": forekomstID})
+        opptatteKupeer = c.fetchall()
+        if len(antallKupeerIForekomst) - len(opptatteKupeer) == 0:
+            print("Toget er fullt prøv en annen avgang")
+            exit(0)
+
+        kundeOnskerAntallSenger = int(input(f"Det er {(len(antallKupeerIForekomst) - len(opptatteKupeer)) * 2} ledige soveplasser på toget. Hvor mange senger ønsker du?: "))
+        # NB!NB! Må sjekke at man ikke velger fler enn mulige ellers blir alt feil
+        antallKupeer = math.ceil(kundeOnskerAntallSenger / 2)
+
+        # Litt databehandling for å få kupeinformasjonen inn i sett slik at vi kan ta differansen
+
+        kupeIForekomst = set()
+        for kupe in antallKupeerIForekomst:
+            kupeIForekomst.add(kupe[0])
+
+        opptatte = set()
+        for kupe in opptatteKupeer:
+            opptatte.add(kupe[0])
+
+        ledigeKupeer = list(kupeIForekomst.difference(opptatte))
+
+        sengerIgjen = kundeOnskerAntallSenger
+
+        # Må vite hvilke delstrekninger reisen består av for å avgjøre start og sluttstasjoner senere.
+        delstrekningIDer = getDelstrekninger(startStasjonID, sluttStasjonID, ruteID)
+
+        for i in range(0, antallKupeer):
+            c.execute("INSERT INTO Ordre (dato, kundenummer) VALUES (:tidspunkt, :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": 1})
+            con.commit()
+            ordrenummer = c.lastrowid
+            for delstrekning in delstrekningIDer:
+                c.execute("INSERT INTO Billett (forekomstID, ordrenummer) VALUES (:forekomstId, :Ordrenummer)", {"forekomstId": forekomstID, "Ordrenummer": ordrenummer})
+                con.commit()
+                billettID = c.lastrowid
+                c.execute("SELECT DISTINCT H.vognID FROM Togruteforekomst as T INNER JOIN HarVogner as H ON (T.forekomstID = :forekomstId and H.ruteID = T.ruteID) INNER JOIN Vogn as V ON (V.vognID = H.vognID and V.vognType = 'sove') INNER JOIN Kupe as K ON (H.vognID = K.vognID)", {"forekomstId": forekomstID})
+                vognID = c.fetchone()[0]
+                c.execute("INSERT INTO Sovebillett (billettID, antallSenger, kupenummer, vognID, delstrekningID) VALUES (:billettID, :antallSenger, :kupenummer, :vognID, :delstrekningID)", {"billettID": billettID, "antallSenger": 1 if sengerIgjen == 1 else 2, "kupenummer": ledigeKupeer[i], "vognID": vognID, "delstrekningID": delstrekning})
+                con.commit()
+            sengerIgjen = sengerIgjen - 1 if sengerIgjen == 1 else 2
+            con.commit()
+            print(f"Takk for ditt kjøp!\nordrenummer: {ordrenummer}\n")
+    if onsketType == "sitte":
+        # Må først finne alle delstrekningene som reisen består av
+        delstrekningIDer = getDelstrekninger(startStasjonID, sluttStasjonID, ruteID)
+
+        # Har nå alle delstrekningene som reisen består av, kan da se om det finnes sete tilgjengelig på hele reisen.
+
+        # Henter først ut alle seter som er tilgjengelige for hver delstrekning.
+        tilgjengeligePlasser = dict()
+        opptattePlasser = dict()
+
+        for delstrekningID in delstrekningIDer:
+            c.execute("""SELECT Sete.setenummer, Sete.radnummer, Sete.vognID
+            FROM Sete
+            JOIN HarVogner ON HarVogner.vognID = Sete.vognID
+            JOIN Togruteforekomst ON Togruteforekomst.ruteID = HarVogner.ruteID
+            JOIN BestarAvDelstrekninger ON BestarAvDelstrekninger.ruteID = Togruteforekomst.ruteID
+            WHERE BestarAvDelstrekninger.delstrekningID = :delstrekningId
+	        AND Togruteforekomst.forekomstID = :forekomstId
+ 	        AND HarVogner.ruteID = Togruteforekomst.ruteID""", {"delstrekningId": delstrekningID, "forekomstId": forekomstID})
+            muligePlasser = c.fetchall()
+            for setenummer, radnummer, vognID in muligePlasser:
+                if (delstrekningID not in tilgjengeligePlasser):
+                    tilgjengeligePlasser[delstrekningID] = [[setenummer, radnummer, vognID]]
+                else:
+                    tilgjengeligePlasser[delstrekningID].append([setenummer, radnummer, vognID])
+
+            c.execute("""
+                SELECT sb.setenummer, sb.radnummer, sb.vognID FROM Sittebillett AS sb
+                JOIN Billett AS b ON b.billettID = sb.billettID
+                JOIN Togruteforekomst AS tf ON tf.forekomstID = b.forekomstID
+                JOIN Delstrekning AS d ON d.delstrekningID = sb.delstrekningID
+                WHERE tf.forekomstID = :forekomstID AND d.delstrekningID = :delstrekningID
+                """, {"forekomstID": forekomstID, "delstrekningID": delstrekningID})
+            res = c.fetchall()
+
+            if res == []:
+                opptattePlasser[delstrekningID] = []
+                continue
+
+            for setenummer, radnummer, vognID in res:
+                if (delstrekningID not in opptattePlasser):
+                    opptattePlasser[delstrekningID] = [[setenummer, radnummer, vognID]]
+                else:
+                    opptattePlasser[delstrekningID].append([setenummer, radnummer, vognID])
+
+        # Gjør om listene i dict til set slik at vi kan ta differansen og finne ledige plasser
+
+        ledigePlasser = dict()
+
+        for delstrekning in delstrekningIDer:
+            ledige = []
+            for plass in tilgjengeligePlasser[delstrekning]:
+                if plass not in opptattePlasser[delstrekning]:
+                    ledige.append(plass)
+            ledigePlasser[delstrekning] = ledige
+
+        ledigPlass = []
+        for plass in ledigePlasser[delstrekningIDer[0]]:
+            ledigPåAlleDestrekninger = True
+            for id in delstrekningIDer:
+                if id == delstrekningIDer[0]:
+                    continue
+                else:
+                    if plass in ledigePlasser[id]:
+                        continue
+                    else:
+                        ledigPåAlleDestrekninger = False
+                        break
+            if ledigPåAlleDestrekninger:
+                ledigPlass = plass
+                break
+
+        print(f"{ledigPlass} er tilgjengelig")
+
+        print(ledigPlass)
+
+        kjøp = input("Vil du kjøpe denne plassen? (y/n): ").lower()
+
+        if (kjøp == "y"):
+
+            c.execute("INSERT INTO Ordre (dato, kundenummer) VALUES (:tidspunkt, :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": kundenummer})
+            con.commit()
+            c.execute("SELECT ordrenummer FROM Ordre WHERE (dato = :tidspunkt and kundenummer = :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": kundenummer})
+            ordrenummer = c.fetchone()[0]
+
+            for delstrekningID in delstrekningIDer:
+                c.execute("INSERT INTO Billett (forekomstID, ordrenummer) VALUES (:forekomstId, :Ordrenummer)", {"forekomstId": forekomstID, "Ordrenummer": ordrenummer})
+                con.commit()
+                c.execute("""
+                SELECT b.billettID FROM Billett as B
+                JOIN Sittebillett as sb ON sb.billettID = b.billettID
+                WHERE (b.forekomstId = :forekomstId and b.ordrenummer = :ordrenummer and sb.delstrekningID = :delstrekningID)
+                """, {"forekomstId": forekomstID, "ordrenummer": ordrenummer, "delstrekningID": delstrekningID})
+                billettID = c.fetchone()
+                c.execute("INSERT INTO Sittebillett (setenummer, radnummer, vognID, delstrekningID, billettID) VALUES (:setenummer, :radnummer, :vognID, :delstrekningID, :billettID)", {"setenummer": ledigPlass[0], "radnummer": ledigPlass[1], "vognID": ledigPlass[2], "delstrekningID": delstrekningID, "billettID": billettID})
+                con.commit()
+            print(f"Takk for ditt kjøp!\nordrenummer: {ordrenummer}\n")
+
+def getDelstrekninger(startStasjon, sluttStasjon, ruteID):
+    c.execute("SELECT hovedretning FROM Togrute WHERE (ruteID = :ruteId)", {"ruteId": ruteID})
+    hovedretning = c.fetchone()[0]
+    delstrekningIDer = []
+    nesteStasjon = int(startStasjon)
+    while True:
+        if hovedretning == 1:
+            c.execute("SELECT delstrekningID, stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :nesteStasjon and S.stasjonID = B.stasjonID and B.stasjonsType = 'start')) and B.stasjonsType = 'ende')", {"nesteStasjon": nesteStasjon})
+        else:
+            c.execute("SELECT delstrekningID, stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :nesteStasjon and S.stasjonID = B.stasjonID and B.stasjonsType = 'ende')) and B.stasjonsType = 'start')", {"nesteStasjon": nesteStasjon})
+        neste = list(c.fetchone())
+        if neste[1] == sluttStasjon:
+            delstrekningIDer.append(neste[0])
+            break
+        else:
+            delstrekningIDer.append(neste[0])
+            nesteStasjon  = neste[1]
+    return delstrekningIDer
+
 
 # For en bruker skal man kunne finne all informasjon om de kjøpene hen har gjort for fremtidige
 # reiser. Denne funksjonaliteten skal programmeres.
