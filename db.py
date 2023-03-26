@@ -271,7 +271,6 @@ def BH_d(startStasjonID = None, sluttStasjonID = None, dato1 = None, dato2 = Non
                 break
             currentStation = nesteStasjon[0]
 
-    finnesRuter = False
     #Printer resultatene
     if (len(muligeRuter) > 0):
         muligeAvganger = []
@@ -291,18 +290,18 @@ def BH_d(startStasjonID = None, sluttStasjonID = None, dato1 = None, dato2 = Non
                 muligeAvganger.append([avgang[2], rute[0], avgangstid, ankomsttid, avgang[0]])
         muligeAvganger.sort()
         if len(muligeAvganger) > 0:
-            finnesRuter = True
             print(f"Fra {startStasjon} til {sluttStasjon} går disse togene: ")
             print(f" ID |   Dato   | Rute | Avgang | Ankomst ")
             print("-----------------------------------")
             for el in muligeAvganger:
                 print(f"{el[4]}   |{el[0][:10]}|  {el[1]}   |  {el[2]}  | {el[3]}")
+            return (muligeAvganger)
         else:
             print("Ingen ruter funnet")
     else:
         print("Ingen ruter funnet")
 
-    return (finnesRuter)
+    return (False)
 
 def hentStasjonDato():
     c.execute("SELECT * FROM stasjon")
@@ -378,20 +377,28 @@ def BH_g():
     # Henter startstasjon, sluttstasjon og dato
     startStasjonNavn, sluttStasjonNavn, dato, dato2, startStasjonID, sluttStasjonID = hentStasjonDato()
 
-    if (not BH_d(startStasjonID, sluttStasjonID, dato, dato2, startStasjonNavn, sluttStasjonNavn)):
+    bh_d = BH_d(startStasjonID, sluttStasjonID, dato, dato2, startStasjonNavn, sluttStasjonNavn)
+    if (not bh_d):
         print("-----------------------")
         main()
 
     # Må først finne ut hvilken forekomstID som skal brukes
-    forekomstID = int(input(f"Skriv inn hvilken ID du ønsker å ta: "))
+    eksisterendeForekomst = False
+    while (not eksisterendeForekomst):
+        forekomstID = int(input(f"Skriv inn hvilken ID du ønsker å ta: "))
+        for el in bh_d:
+            if (el[4] == forekomstID):
+                eksisterendeForekomst = True
+        if (not eksisterendeForekomst):
+            print("Ugyldig ID. Prøv igjen.")
 
 
     kundenummer = int(input("Skriv inn kundenummer: "))
-    
+
     # Sjekker om kunden har et gyldig kundenummer
     c.execute("SELECT COUNT(kundenummer) FROM Kunde WHERE kundenummer = :kundenummer", {"kundenummer": kundenummer})
     antall = c.fetchall()
-    while (antall == 0):
+    while (antall[0][0] == 0):
         print("Ugyldig kundenummer. Prøv igjen.")
         kundenummer = int(input("Skriv inn kundenummer: "))
         c.execute("SELECT COUNT(kundenummer) FROM Kunde WHERE kundenummer = :kundenummer", {"kundenummer": kundenummer})
@@ -428,6 +435,9 @@ def BH_g():
        
     else:
         kjopSittebillett(forekomstID, kundenummer, startStasjonID, sluttStasjonID, tidspunktForOrdre, ruteID)
+
+    # Returnerer til main
+    main()
 
 def kjopSittebillett(forekomstID, kundenummer, startStasjonID, sluttStasjonID, tidspunktForOrdre, ruteID):
     # Må først finne alle delstrekningene som reisen består av
@@ -520,7 +530,9 @@ def kjopSittebillett(forekomstID, kundenummer, startStasjonID, sluttStasjonID, t
             billettID = c.lastrowid
             c.execute("INSERT INTO Sittebillett (setenummer, radnummer, vognID, delstrekningID, billettID) VALUES (:setenummer, :radnummer, :vognID, :delstrekningID, :billettID)", {"setenummer": ledigPlass[0], "radnummer": ledigPlass[1], "vognID": ledigPlass[2], "delstrekningID": delstrekningID, "billettID": billettID})
             con.commit()
-        print(f"Takk for ditt kjøp!\nordrenummer: {ordrenummer}\n")         
+        print(f"Takk for ditt kjøp!\nordrenummer: {ordrenummer}\n")  
+    else:
+        print("Ok. Avslutter brukerhistorien.\n")     
 
 def kjopSovebillett(forekomstID, kundenummer, startStasjonID, sluttStasjonID, tidspunktForOrdre, ruteID):
     c.execute("SELECT kupenummer FROM Togruteforekomst AS T INNER JOIN HarVogner AS H ON (T.forekomstID = :forekomstId and H.ruteID = T.ruteID) INNER JOIN Vogn AS V ON (V.vognID = H.vognID and V.vognType = 'sove') INNER JOIN Kupe AS K ON (H.vognID = K.vognID)", {"forekomstId": forekomstID})
