@@ -306,13 +306,23 @@ def BH_d(startStasjonID = None, sluttStasjonID = None, dato1 = None, dato2 = Non
 def hentStasjonDato():
     c.execute("SELECT * FROM stasjon")
     muligeStartStasjoner = c.fetchall()
+    stasjonIDer = [stasjon[0] for stasjon in muligeStartStasjoner]
     print("___________\nMulige startstasjoner:\n")
     print("ID | StasjonNavn")
     for stasjon in muligeStartStasjoner:
         print(str(stasjon[0]) + " | " + stasjon[2])
 
     startStasjonID = int(input("Hvor starter turen? (Velg en ID): "))
+
+    while startStasjonID not in stasjonIDer:
+        print("Du må velge en av stasjonene på listen.")
+        startStasjonID = int(input("Hvor starter turen? (Velg en ID): "))
+
     sluttStasjonID = int(input("Hvor ender turen? (Velg en ID): "))
+
+    while sluttStasjonID not in stasjonIDer or sluttStasjonID == startStasjonID:
+        print("StasjonID finnes ikke, eller du har valgt samme stasjon som du ønsker å starte på.")
+        sluttStasjonID = int(input("Hvor ender turen? (Velg en ID): "))
 
     startStasjon = muligeStartStasjoner[startStasjonID-1][2]
     sluttStasjon = muligeStartStasjoner[sluttStasjonID-1][2]
