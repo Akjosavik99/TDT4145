@@ -345,7 +345,7 @@ def BH_g():
     print(f"På rute nr: {ruteID} er disse billettypene tilgjenglige {tilgjengeligeTyper}")
 
     onsketType = input("Skriv inn hvilken bilett du ønsker: (sitte/sove)")
-    tidspunktForOrdre = datetime.now().strftime("%Y-%m-%d %H:%M")   
+    tidspunktForOrdre = datetime.now().strftime("%Y-%m-%d %H:%M")
     # Finner en kupe og seng som er tilgjengelig
     if onsketType == "sove":
         c.execute("SELECT kupenummer FROM Togruteforekomst as T INNER JOIN HarVogner as H ON (T.forekomstID = :forekomstId and H.ruteID = T.ruteID) INNER JOIN Vogn as V ON (V.vognID = H.vognID and V.vognType = 'sove') INNER JOIN Kupe as K ON (H.vognID = K.vognID)", {"forekomstId": forekomstID})
@@ -355,8 +355,7 @@ def BH_g():
         if len(antallKupeerIForekomst) - len(opptatteKupeer) == 0:
             print("Toget er fullt prøv en annen avgang")
             exit(0)
-        print(len(antallKupeerIForekomst))
-        print(len(opptatteKupeer))
+
         kundeOnskerAntallSenger = int(input(f"Det er {(len(antallKupeerIForekomst) - len(opptatteKupeer)) * 2} ledige soveplasser på toget. Hvor mange senger ønsker du?: "))
         # NB!NB! Må sjekke at man ikke velger fler enn mulige ellers blir alt feil
         antallKupeer = math.ceil(kundeOnskerAntallSenger / 2)
@@ -375,42 +374,27 @@ def BH_g():
 
         sengerIgjen = kundeOnskerAntallSenger
 
-        for i in range(0, antallKupeer):
-            
+        # Må vite hvilke delstrekninger reisen består av for å avgjøre start og sluttstasjoner senere.
+        delstrekningIDer = getDelstrekninger(startStasjon, sluttStasjon, ruteID)
 
+        for i in range(0, antallKupeer):
             c.execute("INSERT INTO Ordre (dato, kundenummer) VALUES (:tidspunkt, :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": 1})
             con.commit()
-            c.execute("SELECT ordrenummer FROM Ordre WHERE (dato = :tidspunkt and kundenummer = :kundenummer)", {"tidspunkt": tidspunktForOrdre, "kundenummer": kundenummer})
-            ordrenummer = c.fetchone()[0]
-            c.execute("INSERT INTO Billett (forekomstID, ordrenummer) VALUES (:forekomstId, :Ordrenummer)", {"forekomstId": forekomstID, "Ordrenummer": ordrenummer})
-            con.commit()
-            c.execute("SELECT billettID FROM Billett as B WHERE (b.forekomstId = :forekomstId and b.ordrenummer = :ordrenummer)", {"forekomstId": forekomstID, "ordrenummer": ordrenummer})
-            billettID = c.fetchone()
-            c.execute("SELECT DISTINCT H.vognID FROM Togruteforekomst as T INNER JOIN HarVogner as H ON (T.forekomstID = :forekomstId and H.ruteID = T.ruteID) INNER JOIN Vogn as V ON (V.vognID = H.vognID and V.vognType = 'sove') INNER JOIN Kupe as K ON (H.vognID = K.vognID)", {"forekomstId": forekomstID})
-            vognID = c.fetchone()[0]
-
-            c.execute("INSERT INTO Sovebillett (billettID, antallSenger, kupenummer, vognID) VALUES (:billettID, :antallSenger, :kupenummer, :vognID)", {"billettID": billettID[0], "antallSenger": 1 if sengerIgjen == 1 else 2, "kupenummer": ledigeKupeer[i], "vognID": vognID})
+            ordrenummer = c.lastrowid
+            for delstrekning in delstrekningIDer:
+                c.execute("INSERT INTO Billett (forekomstID, ordrenummer) VALUES (:forekomstId, :Ordrenummer)", {"forekomstId": forekomstID, "Ordrenummer": ordrenummer})
+                con.commit()
+                billettID = c.lastrowid
+                c.execute("SELECT DISTINCT H.vognID FROM Togruteforekomst as T INNER JOIN HarVogner as H ON (T.forekomstID = :forekomstId and H.ruteID = T.ruteID) INNER JOIN Vogn as V ON (V.vognID = H.vognID and V.vognType = 'sove') INNER JOIN Kupe as K ON (H.vognID = K.vognID)", {"forekomstId": forekomstID})
+                vognID = c.fetchone()[0]
+                c.execute("INSERT INTO Sovebillett (billettID, antallSenger, kupenummer, vognID, delstrekningID) VALUES (:billettID, :antallSenger, :kupenummer, :vognID, :delstrekningID)", {"billettID": billettID, "antallSenger": 1 if sengerIgjen == 1 else 2, "kupenummer": ledigeKupeer[i], "vognID": vognID, "delstrekningID": delstrekning})
+                con.commit()
             sengerIgjen = sengerIgjen - 1 if sengerIgjen == 1 else 2
             con.commit()
+            print(f"Takk for ditt kjøp!\nordrenummer: {ordrenummer}\n")
     if onsketType == "sitte":
         # Må først finne alle delstrekningene som reisen består av
-        # Finner ut av hva som er hovedretningen til ruten
-        c.execute("SELECT hovedretning FROM Togrute WHERE (ruteID = :ruteId)", {"ruteId": ruteID})
-        hovedretning = c.fetchone()[0]
-        delstrekningIDer = []
-        nesteStasjon = int(startStasjon)
-        while True:
-            if hovedretning == 1:
-                c.execute("SELECT delstrekningID, stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :nesteStasjon and S.stasjonID = B.stasjonID and B.stasjonsType = 'start')) and B.stasjonsType = 'ende')", {"nesteStasjon": nesteStasjon})
-            else:
-                c.execute("SELECT delstrekningID, stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :nesteStasjon and S.stasjonID = B.stasjonID and B.stasjonsType = 'ende')) and B.stasjonsType = 'start')", {"nesteStasjon": nesteStasjon})
-            neste = list(c.fetchone())
-            if neste[1] == sluttStasjon:
-                delstrekningIDer.append(neste[0])
-                break
-            else:
-                delstrekningIDer.append(neste[0])
-                nesteStasjon  = neste[1]
+        delstrekningIDer = getDelstrekninger(startStasjon, sluttStasjon, ruteID)
 
         # Har nå alle delstrekningene som reisen består av, kan da se om det finnes sete tilgjengelig på hele reisen.
 
@@ -504,8 +488,26 @@ def BH_g():
                 billettID = c.fetchone()
                 c.execute("INSERT INTO Sittebillett (setenummer, radnummer, vognID, delstrekningID, billettID) VALUES (:setenummer, :radnummer, :vognID, :delstrekningID, :billettID)", {"setenummer": ledigPlass[0], "radnummer": ledigPlass[1], "vognID": ledigPlass[2], "delstrekningID": delstrekningID, "billettID": billettID})
                 con.commit()
+            print(f"Takk for ditt kjøp!\nordrenummer: {ordrenummer}\n")
 
-
+def getDelstrekninger(startStasjon, sluttStasjon, ruteID):
+    c.execute("SELECT hovedretning FROM Togrute WHERE (ruteID = :ruteId)", {"ruteId": ruteID})
+    hovedretning = c.fetchone()[0]
+    delstrekningIDer = []
+    nesteStasjon = int(startStasjon)
+    while True:
+        if hovedretning == 1:
+            c.execute("SELECT delstrekningID, stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :nesteStasjon and S.stasjonID = B.stasjonID and B.stasjonsType = 'start')) and B.stasjonsType = 'ende')", {"nesteStasjon": nesteStasjon})
+        else:
+            c.execute("SELECT delstrekningID, stasjonID FROM BestarAvStasjon AS B WHERE (B.delstrekningID = (SELECT delstrekningID FROM Stasjon AS S INNER JOIN BestarAvStasjon AS B ON (S.stasjonID = :nesteStasjon and S.stasjonID = B.stasjonID and B.stasjonsType = 'ende')) and B.stasjonsType = 'start')", {"nesteStasjon": nesteStasjon})
+        neste = list(c.fetchone())
+        if neste[1] == sluttStasjon:
+            delstrekningIDer.append(neste[0])
+            break
+        else:
+            delstrekningIDer.append(neste[0])
+            nesteStasjon  = neste[1]
+    return delstrekningIDer
 
 def BH_h():
     pass
