@@ -65,7 +65,7 @@ def BH_c():
         sjekkUkedag = [ukedag, ukedager[dagNummer+1] ]
 
     c.execute("""
-      SELECT dag.ukedag, t.ruteID 
+      SELECT dag.ukedag, t.ruteID
       FROM StarterPaaDag AS dag
       JOIN Togrute AS t ON dag.ruteID = t.ruteID
       WHERE (dag.ukedag = :ukedag1 OR dag.ukedag = :ukedag2)
@@ -92,7 +92,7 @@ def BH_c():
                     JOIN InngaarITogrute AS i ON t.ruteID = i.ruteID
                     JOIN Stasjon AS s ON s.stasjonID = i.stasjonID
                     JOIN StarterPaaDag AS dag ON t.ruteID = dag.ruteID
-                    WHERE t.ruteID = :rute AND s.stasjonsnavn = :stasjon 
+                    WHERE t.ruteID = :rute AND s.stasjonsnavn = :stasjon
                         AND (dag.ukedag = :ukedag1)
                     """,
                     {"rute": rute, "stasjon": stasjon, "ukedag1": sjekkUkedag[0]}
@@ -101,14 +101,14 @@ def BH_c():
                     if len(resultat) > 0:
                         resultat = resultat[0]
                         stasjonerMedDagTid.append([stasjon, resultat[1], resultat[2], resultat[3], rute])
-                        
+
             else:
                 c.execute("""
                   SELECT s.stasjonsnavn, i.ankomsttid, i.avgangstid, dag.ukedag FROM Togrute AS t
                   JOIN InngaarITogrute AS i ON t.ruteID = i.ruteID
                   JOIN Stasjon AS s ON s.stasjonID = i.stasjonID
                   JOIN StarterPaaDag AS dag ON t.ruteID = dag.ruteID
-                  WHERE t.ruteID = :rute AND s.stasjonsnavn = :stasjon 
+                  WHERE t.ruteID = :rute AND s.stasjonsnavn = :stasjon
                     AND (dag.ukedag = :ukedag1
                     OR dag.ukedag = :ukedag2)
                   """,
@@ -176,9 +176,9 @@ def listeMedStasjoner(ruteID):
       FROM Togrute AS t
       JOIN StasjonITogrute AS st ON st.ruteID = t.ruteID
       JOIN Stasjon AS s ON s.stasjonID = st.stasjonID
-      WHERE t.ruteID = :ruteID 
+      WHERE t.ruteID = :ruteID
         AND st.stasjonsType = "start"
-      """, 
+      """,
       {"ruteID": ruteID}
     )
     startStasjon = c.fetchall()[0][0]
@@ -221,7 +221,7 @@ def BH_d(startStasjonID = None, sluttStasjonID = None, dato1 = None, dato2 = Non
         startStasjon, sluttStasjon, dato1, dato2, startStasjonID, sluttStasjonID = hentStasjonDato()
 
     # Finner alle togruter som går gjennom startstasjonen.
-    
+
     c.execute("""
         SELECT ruteID
         FROM InngaarITogrute
@@ -353,7 +353,7 @@ def BH_e():
                 unikTlf = True
             else:
                 print("Telefonnummeret er allerede registrert. Prøv igjen.")
-        
+
 
     # Sjekker om eposten er unik
     unikEpost = False
@@ -432,7 +432,7 @@ def BH_g():
     for type in tilgjengeligeTyper:
         print(type)
 
-    
+
     onsketType = input("Skriv inn hvilken bilett du ønsker (sitte/sove): ")
     while onsketType != "sitte" and onsketType != "sove":
         print("Ugyldig billetttype. Prøv igjen.")
@@ -442,7 +442,7 @@ def BH_g():
     # Finner en kupe og seng som er tilgjengelig
     if onsketType == "sove":
         kjopSovebillett(forekomstID, kundenummer, startStasjonID, sluttStasjonID, tidspunktForOrdre, ruteID)
-       
+
     else:
         kjopSittebillett(forekomstID, kundenummer, startStasjonID, sluttStasjonID, tidspunktForOrdre, ruteID)
 
@@ -523,7 +523,9 @@ def kjopSittebillett(forekomstID, kundenummer, startStasjonID, sluttStasjonID, t
 
     print(f"{ledigPlass} er tilgjengelig")
 
-    print(ledigPlass)
+    if (ledigPlass == []):
+        print("Toget er fullt. Prøv en annen avgang.")
+        main()
 
     kjøp = input("Vil du kjøpe denne plassen? (y/n): ").lower()
 
@@ -540,9 +542,9 @@ def kjopSittebillett(forekomstID, kundenummer, startStasjonID, sluttStasjonID, t
             billettID = c.lastrowid
             c.execute("INSERT INTO Sittebillett (setenummer, radnummer, vognID, delstrekningID, billettID) VALUES (:setenummer, :radnummer, :vognID, :delstrekningID, :billettID)", {"setenummer": ledigPlass[0], "radnummer": ledigPlass[1], "vognID": ledigPlass[2], "delstrekningID": delstrekningID, "billettID": billettID})
             con.commit()
-        print(f"Takk for ditt kjøp!\nordrenummer: {ordrenummer}\n")  
+        print(f"Takk for ditt kjøp!\nordrenummer: {ordrenummer}\n")
     else:
-        print("Ok. Avslutter brukerhistorien.\n")     
+        print("Ok. Avslutter brukerhistorien.\n")
 
 def kjopSovebillett(forekomstID, kundenummer, startStasjonID, sluttStasjonID, tidspunktForOrdre, ruteID):
     c.execute("SELECT kupenummer FROM Togruteforekomst AS T INNER JOIN HarVogner AS H ON (T.forekomstID = :forekomstId and H.ruteID = T.ruteID) INNER JOIN Vogn AS V ON (V.vognID = H.vognID and V.vognType = 'sove') INNER JOIN Kupe AS K ON (H.vognID = K.vognID)", {"forekomstId": forekomstID})
@@ -619,7 +621,7 @@ def BH_h():
     print()
 
     c.execute("""
-    SELECT 
+    SELECT
     tf.ruteID, tf.dato, t.hovedretning, bs1.stasjonsType, s1.stasjonsnavn, sb.vognID, sb.radnummer, sb.setenummer, bs2.stasjonsType, s2.stasjonsnavn, so.vognID, so.kupenummer, so.antallSenger
     FROM Kunde AS k
 
@@ -632,7 +634,7 @@ def BH_h():
     LEFT JOIN BestarAvStasjon AS bs2 ON bs2.delstrekningID = so.delstrekningID
     LEFT JOIN Stasjon AS s1 ON s1.stasjonID = bs1.stasjonID
     LEFT JOIN Stasjon AS s2 ON s2.stasjonID = bs2.stasjonID
-    LEFT JOIN Togrute AS t ON t.ruteID = tf.ruteID 
+    LEFT JOIN Togrute AS t ON t.ruteID = tf.ruteID
     WHERE k.tlf = :tlf
     ORDER BY tf.dato, bs1.delstrekningID, bs2.delstrekningID ASC
     """, {"tlf": tlf})
@@ -657,7 +659,7 @@ def BH_h():
         if (res[i][3] == None):
             num = 9
             sittebillett = True
-        
+
         #Henter start/endestasjon
         if (sammeTur[0][2] == 1):
             startStasjon = sammeTur[0][num]
@@ -679,10 +681,10 @@ def BH_h():
     # Printer reisene
     for s in ruterMedDato.values():
         print(s)
-    
+
     if (len(ruterMedDato) == 0):
         print("Du har ingen fremtidige reiser.")
-    
+
     main()
 
 main()
